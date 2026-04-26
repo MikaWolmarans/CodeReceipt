@@ -15,7 +15,7 @@ class Settings(BaseSettings):
     # --- Active LLM configuration ---
     llm_base_url: str = Field(default='https://openrouter.ai/api/v1', alias='LLM_BASE_URL')
     llm_api_key: Optional[str] = Field(default=None, alias='LLM_API_KEY')
-    llm_model: str = Field(default='qwen/qwen-2.5-coder-32b-instruct', alias='LLM_MODEL')
+    llm_model: str = Field(default='openai/gpt-4o-mini', alias='LLM_MODEL')
     llm_max_tokens_per_request: int = Field(default=4096, alias='LLM_MAX_TOKENS_PER_REQUEST')
     llm_max_requests_per_analysis: int = Field(default=8, alias='LLM_MAX_REQUESTS_PER_ANALYSIS')
 
@@ -39,8 +39,10 @@ class Settings(BaseSettings):
     @classmethod
     def coerce_llm_model(cls, v: object) -> object:
         """Treat empty-string env var as absent — fall back to field default."""
-        if isinstance(v, str) and v.strip() == '':
-            return 'qwen/qwen-2.5-coder-32b-instruct'
+        if isinstance(v, str):
+            v = v.strip().rstrip(',')
+        if not v:
+            return 'openai/gpt-4o-mini'
         return v
 
     @field_validator('llm_base_url', mode='before')
