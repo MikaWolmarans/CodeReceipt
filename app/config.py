@@ -16,7 +16,7 @@ class Settings(BaseSettings):
     ollama_base_url: str = Field(default='http://localhost:11434', alias='OLLAMA_BASE_URL')
     ollama_model: str = Field(default='qwen2.5-coder:1.5b', alias='OLLAMA_MODEL')
     openrouter_api_key: Optional[str] = Field(default=None, alias='OPENROUTER_API_KEY')
-    openrouter_model: str = Field(default='google/gemma-3-27b-it:free', alias='OPENROUTER_MODEL')
+    openrouter_model: str = Field(default='meta-llama/llama-3.1-8b-instruct:free', alias='OPENROUTER_MODEL')
     openrouter_max_tokens: int = Field(default=4096, alias='OPENROUTER_MAX_TOKENS')
 
     github_token: Optional[str] = Field(default=None, alias='GITHUB_TOKEN')

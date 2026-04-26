@@ -1,3 +1,4 @@
+import asyncio
 import json
 import logging
 
@@ -6,6 +7,9 @@ import httpx
 from app.config import get_settings
 
 logger = logging.getLogger(__name__)
+
+# Max concurrent LLM requests — free tier models rate-limit on bursts
+_semaphore = asyncio.Semaphore(2)
 
 
 class LLMClient:
@@ -36,13 +40,24 @@ class LLMClient:
             'temperature': temperature,
             'max_tokens': self.max_tokens,
         }
-        async with httpx.AsyncClient(timeout=120) as client:
-            resp = await client.post('https://openrouter.ai/api/v1/chat/completions', headers=headers, json=payload)
+        for attempt in range(4):
+            async with _semaphore:
+                async with httpx.AsyncClient(timeout=120) as client:
+                    resp = await client.post(
+                        'https://openrouter.ai/api/v1/chat/completions',
+                        headers=headers,
+                        json=payload,
+                    )
+            if resp.status_code == 429:
+                wait = 2 ** attempt  # 1s, 2s, 4s, 8s
+                logger.warning('OpenRouter 429 on attempt %d — retrying in %ds', attempt + 1, wait)
+                await asyncio.sleep(wait)
+                continue
             if not resp.is_success:
                 logger.error('OpenRouter error %s: %s', resp.status_code, resp.text)
             resp.raise_for_status()
-            data = resp.json()
-            return data['choices'][0]['message']['content']
+            return resp.json()['choices'][0]['message']['content']
+        raise RuntimeError('OpenRouter rate limit exceeded after retries.')
 
     @staticmethod
     def try_parse_json(text: str) -> dict:
