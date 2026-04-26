@@ -12,7 +12,8 @@ async def analyse_repository(files: list[RepoFile], stack: dict[str, list[str]],
     chunk_results = []
     for i, chunk in enumerate(chunks):
         prompt = pass_one_prompt(chunk)
-        summary = await llm_client.complete(prompt)
+        # 1024 tokens is plenty for a chunk summary and keeps TPM usage low
+        summary = await llm_client.complete(prompt, max_tokens=1024)
         chunk_results.append({
             'chunk_id': f'chunk-{i + 1}',
             'file_paths': [f.path for f in chunk],
@@ -20,6 +21,6 @@ async def analyse_repository(files: list[RepoFile], stack: dict[str, list[str]],
         })
 
     synth_prompt = synthesis_prompt([c['summary'] for c in chunk_results], stack, options)
-    synthesis_text = await llm_client.complete(synth_prompt)
+    synthesis_text = await llm_client.complete(synth_prompt, max_tokens=2048)
     synthesis = llm_client.try_parse_json(synthesis_text)
     return chunk_results, synthesis

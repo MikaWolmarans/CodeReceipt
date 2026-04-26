@@ -2,6 +2,7 @@ import asyncio
 import json
 import logging
 import random
+import re
 
 import httpx
 
@@ -46,7 +47,15 @@ class LLMClient:
             logger.info('LLMClient initialised — provider: %s | model: %s | key: %s',
                         self.provider, self.model, key_preview)
 
-    async def complete(self, prompt: str, temperature: float = 0.2) -> str:
+    @staticmethod
+    def _parse_retry_after(body: str) -> float:
+        """Extract suggested wait seconds from provider 429 response body."""
+        match = re.search(r'try again in ([\d.]+)s', body)
+        if match:
+            return float(match.group(1)) + random.uniform(0.5, 1.5)
+        return None
+
+    async def complete(self, prompt: str, temperature: float = 0.2, max_tokens: int | None = None) -> str:
         if not self.api_key:
             raise RuntimeError(f'{self.provider.upper()} API key is not configured on this server.')
         headers = {
@@ -60,16 +69,15 @@ class LLMClient:
                 {'role': 'user', 'content': prompt},
             ],
             'temperature': temperature,
-            'max_tokens': self.max_tokens,
+            'max_tokens': max_tokens or self.max_tokens,
         }
         for attempt in range(4):
             async with _semaphore:
                 async with httpx.AsyncClient(timeout=120) as client:
                     resp = await client.post(self.endpoint, headers=headers, json=payload)
             if resp.status_code == 429:
-                wait = (2 ** attempt) + random.uniform(0, 1)
-                logger.warning('%s 429 on attempt %d — body: %s — retrying in %.1fs',
-                               self.provider, attempt + 1, resp.text, wait)
+                wait = self._parse_retry_after(resp.text) or (2 ** attempt) + random.uniform(0, 1)
+                logger.warning('%s 429 on attempt %d — retrying in %.1fs', self.provider, attempt + 1, wait)
                 await asyncio.sleep(wait)
                 continue
             if not resp.is_success:
