@@ -1,0 +1,34 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <style>
+    @page { size: A4; margin: 1.6cm; }
+    body { font-family: Arial, sans-serif; color: #1f2937; }
+    .cover { page-break-after: always; }
+    h1, h2 { color: #111827; }
+    .meta { background: #f3f4f6; padding: 12px; border-radius: 8px; }
+    section { margin-bottom: 20px; }
+    .small { color: #6b7280; font-size: 12px; }
+  </style>
+</head>
+<body>
+  <div class="cover">
+    <h1>CodeReceipt Owner's Manual</h1>
+    <p class="small">Built for: {{ repo_name }} | Generated: {{ generated_at }}</p>
+    <div class="meta">
+      <strong>Stack Summary</strong>
+      <p>Languages: {{ stack.languages | join(', ') or 'N/A' }}</p>
+      <p>Frameworks: {{ stack.frameworks | join(', ') or 'N/A' }}</p>
+      <p>Databases: {{ stack.databases | join(', ') or 'N/A' }}</p>
+    </div>
+  </div>
+
+  <section><h2>What You Built</h2><p>{{ synthesis.what_you_built }}</p></section>
+  <section><h2>Architecture Overview</h2><p>{{ synthesis.architecture_overview }}</p></section>
+  <section><h2>File-by-File Reference</h2><p>{{ synthesis.file_reference }}</p></section>
+  <section><h2>Maintenance Guide</h2><p>{{ synthesis.maintenance_guide }}</p></section>
+  <section><h2>Concept Glossary</h2><p>{{ synthesis.concept_glossary }}</p></section>
+  <section><h2>Quick Reference</h2><p>{{ synthesis.quick_reference }}</p></section>
+</body>
+</html>
