@@ -19,6 +19,8 @@ class Settings(BaseSettings):
     openrouter_model: str = Field(default='google/gemma-3-27b-it:free', alias='OPENROUTER_MODEL')
     openrouter_max_tokens: int = Field(default=4096, alias='OPENROUTER_MAX_TOKENS')
 
+    github_token: Optional[str] = Field(default=None, alias='GITHUB_TOKEN')
+
     max_daily_analyses: int = Field(default=100, alias='MAX_DAILY_ANALYSES')
     session_ttl_seconds: int = Field(default=7200, alias='SESSION_TTL_SECONDS')
     max_zip_size_mb: int = Field(default=25, alias='MAX_ZIP_SIZE_MB')

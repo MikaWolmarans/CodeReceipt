@@ -1,7 +1,11 @@
 import json
+import logging
+import traceback
 from typing import Annotated
 
 from fastapi import APIRouter, BackgroundTasks, File, Form, HTTPException, UploadFile
+
+logger = logging.getLogger(__name__)
 
 from app.config import get_settings
 from app.middleware.rate_limit import enforce_daily_limit
@@ -34,8 +38,9 @@ async def _run_analysis(session_id: str, files, repo_name: str) -> None:
         notify_email = session.get('notify_email')
         if notify_email:
             await send_manual_ready_email(notify_email, session_id, repo_name)
-    except Exception:
-        await session_service.update_session(session_id, status='failed', error='Analysis failed unexpectedly.')
+    except Exception as exc:
+        logger.error('Analysis failed for session %s: %s\n%s', session_id, exc, traceback.format_exc())
+        await session_service.update_session(session_id, status='failed', error=str(exc) or 'Analysis failed unexpectedly.')
 
 
 @router.post('/analyse', response_model=AnalyseResponse)

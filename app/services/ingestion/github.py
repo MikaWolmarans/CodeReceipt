@@ -38,8 +38,12 @@ async def ingest_repo_url(url: str, github_limit_mb: int) -> tuple[list[RepoFile
 
 
 async def _ingest_github(parts: list[str], github_limit_mb: int) -> tuple[list[RepoFile], dict]:
+    from app.config import get_settings
     owner, repo = parts[0], parts[1].removesuffix('.git')
+    settings = get_settings()
     headers = {'Accept': 'application/vnd.github+json', 'User-Agent': 'CodeReceipt'}
+    if settings.github_token:
+        headers['Authorization'] = f'Bearer {settings.github_token}'
     async with httpx.AsyncClient(timeout=30) as client:
         repo_resp = await client.get(f'https://api.github.com/repos/{owner}/{repo}', headers=headers)
         if repo_resp.status_code != 200:

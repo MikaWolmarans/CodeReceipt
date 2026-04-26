@@ -10,6 +10,7 @@ class LLMClient:
         settings = get_settings()
         self.api_key = settings.openrouter_api_key
         self.model = settings.openrouter_model
+        self.max_tokens = settings.openrouter_max_tokens
 
     async def complete(self, prompt: str, temperature: float = 0.2) -> str:
         headers = {
@@ -23,6 +24,7 @@ class LLMClient:
                 {'role': 'user', 'content': prompt},
             ],
             'temperature': temperature,
+            'max_tokens': self.max_tokens,
         }
         async with httpx.AsyncClient(timeout=120) as client:
             resp = await client.post('https://openrouter.ai/api/v1/chat/completions', headers=headers, json=payload)
