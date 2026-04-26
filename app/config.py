@@ -17,7 +17,7 @@ class Settings(BaseSettings):
     llm_api_key: Optional[str] = Field(default=None, alias='LLM_API_KEY')
     llm_model: str = Field(default='openai/gpt-4o-mini', alias='LLM_MODEL')
     llm_max_tokens_per_request: int = Field(default=4096, alias='LLM_MAX_TOKENS_PER_REQUEST')
-    llm_max_requests_per_analysis: int = Field(default=8, alias='LLM_MAX_REQUESTS_PER_ANALYSIS')
+    llm_max_requests_per_analysis: int = Field(default=25, alias='LLM_MAX_REQUESTS_PER_ANALYSIS')
 
     @field_validator('llm_max_tokens_per_request', mode='before')
     @classmethod
@@ -32,7 +32,7 @@ class Settings(BaseSettings):
     def coerce_max_requests(cls, v: object) -> object:
         """Treat empty-string env var as absent — fall back to field default."""
         if isinstance(v, str) and v.strip() == '':
-            return 8
+            return 25
         return v
 
     @field_validator('llm_model', mode='before')
