@@ -2,6 +2,7 @@ from app.models.analysis import RepoFile
 
 
 def _estimate_tokens(text: str) -> int:
+    """Rough token count: ~4 chars per token (good enough for budget planning)."""
     return max(1, len(text) // 4)
 
 
