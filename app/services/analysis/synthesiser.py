@@ -9,8 +9,12 @@ from app.services.analysis.prompts import pass_one_prompt, synthesis_prompt
 
 logger = logging.getLogger(__name__)
 
-# gpt-4o-mini pricing (USD per token) — used for pre-flight cost estimate.
-# These are approximate; actual cost depends on the configured model.
+# Pricing used for the pre-flight cost estimate (USD per token).
+# These match openai/gpt-4o-mini on OpenRouter; actual cost varies by model:
+#   gpt-4o-mini:              $0.150 / $0.600 per 1M in/out
+#   qwen/qwen-2.5-coder-32b:  $0.070 / $0.160 per 1M in/out
+# The estimate is intentionally conservative (gpt-4o-mini rates) so it
+# never under-reports cost regardless of which model is configured.
 _INPUT_COST_PER_TOKEN = 0.15 / 1_000_000
 _OUTPUT_COST_PER_TOKEN = 0.60 / 1_000_000
 
@@ -72,9 +76,9 @@ async def analyse_repository(files: list[RepoFile], stack: dict[str, list[str]],
     )
 
     logger.info(
-        'Analysis plan: %d file(s) → %d chunk(s) + 1 synthesis '
+        'Analysis plan: model=%s | %d file(s) → %d chunk(s) + 1 synthesis '
         '(budget: %d requests) | est. tokens in=%d out=%d | est. cost ~$%.4f',
-        len(files), n_chunks, max_requests, est_input, est_output, est_cost,
+        settings.llm_model, len(files), n_chunks, max_requests, est_input, est_output, est_cost,
     )
 
     if est_cost > 0.50:
