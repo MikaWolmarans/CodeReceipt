@@ -12,22 +12,38 @@ logger = logging.getLogger(__name__)
 # Max concurrent LLM requests — free tier models rate-limit on bursts
 _semaphore = asyncio.Semaphore(2)
 
+PROVIDER_ENDPOINTS = {
+    'openrouter': 'https://openrouter.ai/api/v1/chat/completions',
+    'gemini': 'https://generativelanguage.googleapis.com/v1beta/openai/chat/completions',
+}
+
 
 class LLMClient:
     def __init__(self) -> None:
         settings = get_settings()
-        self.api_key = settings.openrouter_api_key
-        self.model = settings.openrouter_model
-        self.max_tokens = settings.openrouter_max_tokens
+        self.provider = settings.llm_provider
+
+        if self.provider == 'gemini':
+            self.api_key = settings.gemini_api_key
+            self.model = settings.gemini_model
+            self.max_tokens = 4096
+        else:  # openrouter
+            self.api_key = settings.openrouter_api_key
+            self.model = settings.openrouter_model
+            self.max_tokens = settings.openrouter_max_tokens
+
+        self.endpoint = PROVIDER_ENDPOINTS.get(self.provider, PROVIDER_ENDPOINTS['openrouter'])
+
         if not self.api_key:
-            logger.error('OPENROUTER_API_KEY is not set — LLM calls will fail')
+            logger.error('%s API key is not set — LLM calls will fail', self.provider.upper())
         else:
             key_preview = f'{self.api_key[:8]}...' if len(self.api_key) > 8 else '***'
-            logger.info('LLMClient initialised — model: %s | key: %s', self.model, key_preview)
+            logger.info('LLMClient initialised — provider: %s | model: %s | key: %s',
+                        self.provider, self.model, key_preview)
 
     async def complete(self, prompt: str, temperature: float = 0.2) -> str:
         if not self.api_key:
-            raise RuntimeError('OPENROUTER_API_KEY is not configured on this server.')
+            raise RuntimeError(f'{self.provider.upper()} API key is not configured on this server.')
         headers = {
             'Authorization': f'Bearer {self.api_key}',
             'Content-Type': 'application/json',
@@ -44,21 +60,17 @@ class LLMClient:
         for attempt in range(4):
             async with _semaphore:
                 async with httpx.AsyncClient(timeout=120) as client:
-                    resp = await client.post(
-                        'https://openrouter.ai/api/v1/chat/completions',
-                        headers=headers,
-                        json=payload,
-                    )
+                    resp = await client.post(self.endpoint, headers=headers, json=payload)
             if resp.status_code == 429:
-                wait = (2 ** attempt) + random.uniform(0, 1)  # 1-2s, 2-3s, 4-5s, 8-9s
-                logger.warning('OpenRouter 429 on attempt %d — retrying in %.1fs', attempt + 1, wait)
+                wait = (2 ** attempt) + random.uniform(0, 1)
+                logger.warning('%s 429 on attempt %d — retrying in %.1fs', self.provider, attempt + 1, wait)
                 await asyncio.sleep(wait)
                 continue
             if not resp.is_success:
-                logger.error('OpenRouter error %s: %s', resp.status_code, resp.text)
+                logger.error('%s error %s: %s', self.provider, resp.status_code, resp.text)
             resp.raise_for_status()
             return resp.json()['choices'][0]['message']['content']
-        raise RuntimeError('OpenRouter rate limit exceeded after retries.')
+        raise RuntimeError(f'{self.provider} rate limit exceeded after retries.')
 
     @staticmethod
     def try_parse_json(text: str) -> dict:

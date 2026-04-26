@@ -12,12 +12,14 @@ class Settings(BaseSettings):
     mongodb_uri: str = Field(alias='MONGODB_URI')
     frontend_url: str = Field(alias='FRONTEND_URL')
 
-    llm_provider: str = Field(default='ollama', alias='LLM_PROVIDER')
+    llm_provider: str = Field(default='gemini', alias='LLM_PROVIDER')
     ollama_base_url: str = Field(default='http://localhost:11434', alias='OLLAMA_BASE_URL')
     ollama_model: str = Field(default='qwen2.5-coder:1.5b', alias='OLLAMA_MODEL')
     openrouter_api_key: Optional[str] = Field(default=None, alias='OPENROUTER_API_KEY')
     openrouter_model: str = Field(default='meta-llama/llama-3.3-70b-instruct:free', alias='OPENROUTER_MODEL')
     openrouter_max_tokens: int = Field(default=4096, alias='OPENROUTER_MAX_TOKENS')
+    gemini_api_key: Optional[str] = Field(default=None, alias='GEMINI_API_KEY')
+    gemini_model: str = Field(default='gemini-2.0-flash', alias='GEMINI_MODEL')
 
     github_token: Optional[str] = Field(default=None, alias='GITHUB_TOKEN')
 
@@ -35,7 +37,7 @@ class Settings(BaseSettings):
     @field_validator('llm_provider')
     @classmethod
     def validate_llm_provider(cls, v: str) -> str:
-        allowed = {'ollama', 'openrouter'}
+        allowed = {'ollama', 'openrouter', 'gemini'}
         if v.lower() not in allowed:
             raise ValueError(f'LLM_PROVIDER must be one of: {allowed}')
         return v.lower()
