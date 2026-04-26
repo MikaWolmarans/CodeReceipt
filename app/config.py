@@ -20,6 +20,8 @@ class Settings(BaseSettings):
     openrouter_max_tokens: int = Field(default=4096, alias='OPENROUTER_MAX_TOKENS')
     gemini_api_key: Optional[str] = Field(default=None, alias='GEMINI_API_KEY')
     gemini_model: str = Field(default='gemini-2.0-flash', alias='GEMINI_MODEL')
+    groq_api_key: Optional[str] = Field(default=None, alias='GROQ_API_KEY')
+    groq_model: str = Field(default='qwen-2.5-coder-32b', alias='GROQ_MODEL')
 
     github_token: Optional[str] = Field(default=None, alias='GITHUB_TOKEN')
 
@@ -37,7 +39,7 @@ class Settings(BaseSettings):
     @field_validator('llm_provider')
     @classmethod
     def validate_llm_provider(cls, v: str) -> str:
-        allowed = {'ollama', 'openrouter', 'gemini'}
+        allowed = {'ollama', 'openrouter', 'gemini', 'groq'}
         if v.lower() not in allowed:
             raise ValueError(f'LLM_PROVIDER must be one of: {allowed}')
         return v.lower()

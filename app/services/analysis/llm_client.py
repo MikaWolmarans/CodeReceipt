@@ -15,6 +15,7 @@ _semaphore = asyncio.Semaphore(2)
 PROVIDER_ENDPOINTS = {
     'openrouter': 'https://openrouter.ai/api/v1/chat/completions',
     'gemini': 'https://generativelanguage.googleapis.com/v1beta/openai/chat/completions',
+    'groq': 'https://api.groq.com/openai/v1/chat/completions',
 }
 
 
@@ -26,6 +27,10 @@ class LLMClient:
         if self.provider == 'gemini':
             self.api_key = settings.gemini_api_key
             self.model = settings.gemini_model
+            self.max_tokens = 4096
+        elif self.provider == 'groq':
+            self.api_key = settings.groq_api_key
+            self.model = settings.groq_model
             self.max_tokens = 4096
         else:  # openrouter
             self.api_key = settings.openrouter_api_key
