@@ -14,10 +14,15 @@ class LLMClient:
         self.api_key = settings.openrouter_api_key
         self.model = settings.openrouter_model
         self.max_tokens = settings.openrouter_max_tokens
-        key_preview = f'{self.api_key[:8]}...' if self.api_key and len(self.api_key) > 8 else repr(self.api_key)
-        logger.info('LLMClient initialised — model: %s | key: %s', self.model, key_preview)
+        if not self.api_key:
+            logger.error('OPENROUTER_API_KEY is not set — LLM calls will fail')
+        else:
+            key_preview = f'{self.api_key[:8]}...' if len(self.api_key) > 8 else '***'
+            logger.info('LLMClient initialised — model: %s | key: %s', self.model, key_preview)
 
     async def complete(self, prompt: str, temperature: float = 0.2) -> str:
+        if not self.api_key:
+            raise RuntimeError('OPENROUTER_API_KEY is not configured on this server.')
         headers = {
             'Authorization': f'Bearer {self.api_key}',
             'Content-Type': 'application/json',
