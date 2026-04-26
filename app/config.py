@@ -35,6 +35,22 @@ class Settings(BaseSettings):
             return 8
         return v
 
+    @field_validator('llm_model', mode='before')
+    @classmethod
+    def coerce_llm_model(cls, v: object) -> object:
+        """Treat empty-string env var as absent — fall back to field default."""
+        if isinstance(v, str) and v.strip() == '':
+            return 'qwen/qwen-2.5-coder-32b-instruct'
+        return v
+
+    @field_validator('llm_base_url', mode='before')
+    @classmethod
+    def coerce_llm_base_url(cls, v: object) -> object:
+        """Treat empty-string env var as absent — fall back to field default."""
+        if isinstance(v, str) and v.strip() == '':
+            return 'https://openrouter.ai/api/v1'
+        return v
+
     # --- Legacy provider fields (kept for backwards compatibility) ---
     llm_provider: str = Field(default='openrouter', alias='LLM_PROVIDER')
     ollama_base_url: str = Field(default='http://localhost:11434', alias='OLLAMA_BASE_URL')
