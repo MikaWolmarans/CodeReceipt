@@ -822,12 +822,10 @@
 <nav>
   <a class="nav-logo" href="#">REPO<em>PDF</em></a>
   <ul class="nav-links">
-    <li><a href="#">How it works</a></li>
-    <li><a href="#">Docs</a></li>
-    <li><a href="#">Pricing</a></li>
-    <li><a href="#">API</a></li>
+    <li><a href="#how-it-works">How it works</a></li>
+    <li><a href="#features">Features</a></li>
   </ul>
-  <button class="nav-cta">Get Started →</button>
+  <button class="nav-cta" onclick="document.getElementById('root').scrollIntoView({behavior:'smooth'})">Get Started →</button>
 </nav>
 
 <!-- APP (React) -->
@@ -854,7 +852,7 @@
   </div>
 
   <!-- How It Works -->
-  <section class="how-section">
+  <section class="how-section" id="how-it-works">
     <div class="section-header">
       <span class="section-num">01 /</span>
       <h2 class="section-title">How It Works</h2>
@@ -888,7 +886,7 @@
   </section>
 
   <!-- Features -->
-  <section class="features-section">
+  <section class="features-section" id="features">
     <div class="section-header">
       <span class="section-num">02 /</span>
       <h2 class="section-title">Features</h2>
@@ -1014,6 +1012,7 @@ function App() {
   const [processing, setProcessing] = useState(false);
   const [procStep, setProcStep] = useState(0);
   const [done, setDone] = useState(false);
+  const [email, setEmail] = useState('');
   const fileRef = useRef();
   const pollingRef = useRef();
   const [sessionId, setSessionId] = useState(null);
@@ -1042,6 +1041,7 @@ function App() {
       fd.append('zip_file', file);
     }
     fd.append('options_json', JSON.stringify(optionsPayload));
+    if (email.trim()) fd.append('email', email.trim());
 
     try {
       const res = await fetch('/analyse', { method: 'POST', body: fd });
@@ -1232,6 +1232,21 @@ function App() {
               </div>
             </div>
           )}
+
+          <div style={{ marginTop: 8 }}>
+            <p className="input-label" style={{ marginBottom: 10 }}>Email (optional — get notified when ready)</p>
+            <div className="url-input-wrap" style={{ marginBottom: 0 }}>
+              <input
+                className="url-input"
+                type="email"
+                placeholder="you@example.com"
+                value={email}
+                onChange={e => setEmail(e.target.value)}
+                spellCheck={false}
+                autoComplete="email"
+              />
+            </div>
+          </div>
 
           <button className="submit-btn" onClick={done ? downloadManual : startProcessing} disabled={!canSubmit}>
             {done ? '↓ Download Manual' : 'Generate My Manual →'}

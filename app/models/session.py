@@ -38,6 +38,7 @@ class SessionDocument(BaseModel):
     analysis: dict[str, Any] = Field(default_factory=lambda: {'chunks': [], 'synthesis': {}})
     pdf_delivered: bool = False
     error: str | None = None
+    notify_email: str | None = None
 
 
 class AnalyseResponse(BaseModel):
