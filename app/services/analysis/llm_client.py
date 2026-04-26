@@ -1,6 +1,7 @@
 import asyncio
 import json
 import logging
+import random
 
 import httpx
 
@@ -49,8 +50,8 @@ class LLMClient:
                         json=payload,
                     )
             if resp.status_code == 429:
-                wait = 2 ** attempt  # 1s, 2s, 4s, 8s
-                logger.warning('OpenRouter 429 on attempt %d — retrying in %ds', attempt + 1, wait)
+                wait = (2 ** attempt) + random.uniform(0, 1)  # 1-2s, 2-3s, 4-5s, 8-9s
+                logger.warning('OpenRouter 429 on attempt %d — retrying in %.1fs', attempt + 1, wait)
                 await asyncio.sleep(wait)
                 continue
             if not resp.is_success:
