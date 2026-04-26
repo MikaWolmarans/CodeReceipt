@@ -19,6 +19,22 @@ class Settings(BaseSettings):
     llm_max_tokens_per_request: int = Field(default=4096, alias='LLM_MAX_TOKENS_PER_REQUEST')
     llm_max_requests_per_analysis: int = Field(default=8, alias='LLM_MAX_REQUESTS_PER_ANALYSIS')
 
+    @field_validator('llm_max_tokens_per_request', mode='before')
+    @classmethod
+    def coerce_max_tokens(cls, v: object) -> object:
+        """Treat empty-string env var as absent — fall back to field default."""
+        if isinstance(v, str) and v.strip() == '':
+            return 4096
+        return v
+
+    @field_validator('llm_max_requests_per_analysis', mode='before')
+    @classmethod
+    def coerce_max_requests(cls, v: object) -> object:
+        """Treat empty-string env var as absent — fall back to field default."""
+        if isinstance(v, str) and v.strip() == '':
+            return 8
+        return v
+
     # --- Legacy provider fields (kept for backwards compatibility) ---
     llm_provider: str = Field(default='openrouter', alias='LLM_PROVIDER')
     ollama_base_url: str = Field(default='http://localhost:11434', alias='OLLAMA_BASE_URL')
