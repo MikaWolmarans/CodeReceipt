@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 340 72" width="340" height="72" style="background:transparent;">
+
+  
+  <text x="0" y="54" font-family="&#39;Courier New&#39;, Courier, monospace" font-size="40" font-weight="700" fill="#0A0A0A" letter-spacing="-1">CODE</text>
+
+  
+  <rect x="118" y="4" width="222" height="56" fill="#E8FF00"></rect>
+  <rect x="118" y="4" width="222" height="56" fill="none" stroke="#0A0A0A" stroke-width="3"></rect>
+
+  
+  <text x="130" y="54" font-family="&#39;Courier New&#39;, Courier, monospace" font-size="40" font-weight="700" fill="#0A0A0A" letter-spacing="-1">RECEIPT</text>
+
+</svg>
