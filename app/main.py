@@ -1,5 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 
 from app.config import get_settings
 from app.middleware.security import setup_security_middleware
@@ -32,3 +33,5 @@ async def health() -> dict[str, str]:
 app.include_router(ingest.router)
 app.include_router(status.router)
 app.include_router(export.router)
+
+app.mount('/', StaticFiles(directory='frontend', html=True), name='frontend')

@@ -1,0 +1,1342 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>REPOPDF — The Owner's Manual for Your Code</title>
+<template id="__bundler_thumbnail" data-bg-color="#0A0A0A">
+  <svg viewBox="0 0 1200 800" xmlns="http://www.w3.org/2000/svg">
+    <rect width="1200" height="800" fill="#0A0A0A"/>
+    <rect x="0" y="0" width="1200" height="36" fill="#E8FF00"/>
+    <rect x="60" y="100" width="500" height="14" rx="0" fill="#F2EDE3" opacity="0.15"/>
+    <rect x="60" y="140" width="420" height="80" rx="0" fill="#F2EDE3" opacity="0.9"/>
+    <rect x="60" y="240" width="340" height="80" rx="0" fill="#E8FF00" opacity="0.9"/>
+    <rect x="60" y="340" width="280" height="80" rx="0" fill="none" stroke="#F2EDE3" stroke-width="4" opacity="0.5"/>
+    <rect x="60" y="500" width="120" height="40" rx="0" fill="#F2EDE3" opacity="0.2"/>
+    <rect x="200" y="500" width="120" height="40" rx="0" fill="#F2EDE3" opacity="0.2"/>
+    <rect x="340" y="500" width="120" height="40" rx="0" fill="#F2EDE3" opacity="0.2"/>
+    <rect x="660" y="60" width="480" height="680" rx="0" fill="#161616" stroke="#E8FF00" stroke-width="3"/>
+    <rect x="680" y="80" width="440" height="50" rx="0" fill="#1E1E1E"/>
+    <rect x="700" y="160" width="440" height="3" fill="#E8FF00" opacity="0.3"/>
+    <rect x="700" y="200" width="380" height="24" rx="0" fill="#F2EDE3" opacity="0.08"/>
+    <rect x="700" y="240" width="380" height="24" rx="0" fill="#F2EDE3" opacity="0.08"/>
+    <rect x="700" y="620" width="380" height="56" rx="0" fill="#E8FF00"/>
+  </svg>
+</template>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Space+Grotesk:wght@300;400;500;700;800&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+<style>
+  :root {
+    --black: #0A0A0A;
+    --cream: #F2EDE3;
+    --yellow: #E8FF00;
+    --red: #FF2B2B;
+    --border: 3px solid #0A0A0A;
+    --shadow: 6px 6px 0px #0A0A0A;
+    --shadow-lg: 10px 10px 0px #0A0A0A;
+    --mono: 'Space Mono', monospace;
+    --sans: 'Space Grotesk', sans-serif;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--cream);
+    color: var(--black);
+    font-family: var(--sans);
+    overflow-x: hidden;
+    cursor: crosshair;
+  }
+
+  ::selection { background: var(--yellow); color: var(--black); }
+
+  /* TICKER */
+  .ticker-wrap {
+    background: var(--black);
+    color: var(--yellow);
+    border-bottom: var(--border);
+    padding: 10px 0;
+    overflow: hidden;
+    font-family: var(--mono);
+    font-size: 12px;
+    letter-spacing: 0.1em;
+    white-space: nowrap;
+  }
+  .ticker-track {
+    display: inline-block;
+    animation: ticker 28s linear infinite;
+  }
+  .ticker-track span { margin: 0 40px; }
+  @keyframes ticker {
+    from { transform: translateX(0); }
+    to { transform: translateX(-50%); }
+  }
+
+  /* NAV */
+  nav {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 20px 48px;
+    border-bottom: var(--border);
+    background: var(--cream);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+  .nav-logo {
+    font-family: var(--mono);
+    font-size: 18px;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    cursor: pointer;
+    text-decoration: none;
+    color: var(--black);
+  }
+  .nav-logo em {
+    display: inline-block;
+    background: var(--yellow);
+    color: var(--black);
+    padding: 2px 6px;
+    font-style: normal;
+    border: 2px solid var(--black);
+    margin-left: 4px;
+  }
+  .nav-links {
+    display: flex;
+    gap: 32px;
+    list-style: none;
+  }
+  .nav-links a {
+    font-family: var(--mono);
+    font-size: 12px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    text-decoration: none;
+    color: var(--black);
+    transition: color 0.1s;
+    cursor: pointer;
+  }
+  .nav-links a:hover { color: var(--red); }
+  .nav-cta {
+    font-family: var(--mono);
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    background: var(--black);
+    color: var(--yellow);
+    border: var(--border);
+    padding: 10px 20px;
+    cursor: pointer;
+    transition: transform 0.1s, box-shadow 0.1s;
+    box-shadow: var(--shadow);
+  }
+  .nav-cta:hover { transform: translate(-2px, -2px); box-shadow: 8px 8px 0 var(--black); }
+  .nav-cta:active { transform: translate(2px, 2px); box-shadow: 2px 2px 0 var(--black); }
+
+  /* HERO */
+  .hero {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    min-height: calc(100vh - 97px);
+    border-bottom: var(--border);
+  }
+  .hero-left {
+    padding: 80px 48px;
+    border-right: var(--border);
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+  }
+  .hero-eyebrow {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--black);
+    opacity: 0.5;
+    margin-bottom: 24px;
+  }
+  .hero-title {
+    font-size: clamp(64px, 7vw, 112px);
+    font-weight: 800;
+    line-height: 0.92;
+    letter-spacing: -0.04em;
+    text-transform: uppercase;
+  }
+  .hero-title .line-accent { color: var(--red); display: block; }
+  .hero-title .line-stroke {
+    -webkit-text-stroke: 3px var(--black);
+    color: transparent;
+    display: block;
+  }
+  .hero-desc {
+    margin-top: 48px;
+    font-size: 16px;
+    line-height: 1.6;
+    max-width: 420px;
+    color: var(--black);
+    opacity: 0.75;
+    font-weight: 400;
+  }
+  .hero-stats {
+    display: flex;
+    gap: 0;
+    margin-top: 64px;
+    border: var(--border);
+    box-shadow: var(--shadow);
+  }
+  .stat {
+    flex: 1;
+    padding: 20px 24px;
+    border-right: var(--border);
+  }
+  .stat:last-child { border-right: none; }
+  .stat-num {
+    font-family: var(--mono);
+    font-size: 28px;
+    font-weight: 700;
+    display: block;
+    color: var(--black);
+  }
+  .stat-label {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    opacity: 0.5;
+    margin-top: 4px;
+    display: block;
+  }
+
+  /* HERO RIGHT - INPUT PANEL */
+  .hero-right {
+    display: flex;
+    flex-direction: column;
+    background: var(--black);
+  }
+  .panel-header {
+    padding: 24px 40px;
+    border-bottom: 3px solid rgba(255,255,255,0.15);
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+  .panel-dots {
+    display: flex;
+    gap: 8px;
+  }
+  .dot {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    border: 2px solid rgba(255,255,255,0.3);
+  }
+  .dot.red { background: var(--red); border-color: var(--red); }
+  .dot.yellow { background: var(--yellow); border-color: var(--yellow); }
+  .dot.green { background: #00FF7F; border-color: #00FF7F; }
+  .panel-title {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: rgba(255,255,255,0.4);
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    margin-left: auto;
+  }
+
+  .panel-body { padding: 40px; flex: 1; display: flex; flex-direction: column; }
+
+  /* Mode Tabs */
+  .mode-tabs {
+    display: flex;
+    border: 2px solid rgba(255,255,255,0.2);
+    margin-bottom: 40px;
+    position: relative;
+  }
+  .mode-tab {
+    flex: 1;
+    padding: 14px;
+    font-family: var(--mono);
+    font-size: 12px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    color: rgba(255,255,255,0.4);
+    transition: color 0.2s;
+    position: relative;
+    z-index: 1;
+  }
+  .mode-tab.active { color: var(--black); }
+  .tab-slider {
+    position: absolute;
+    top: 0; bottom: 0;
+    width: 50%;
+    background: var(--yellow);
+    transition: left 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    z-index: 0;
+  }
+  .tab-slider.right { left: 50%; }
+  .tab-slider.left { left: 0; }
+
+  /* URL Input */
+  .url-section { flex: 1; display: flex; flex-direction: column; }
+  .input-label {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: rgba(255,255,255,0.4);
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    margin-bottom: 12px;
+  }
+  .url-input-wrap {
+    display: flex;
+    border: 2px solid rgba(255,255,255,0.2);
+    transition: border-color 0.2s;
+    margin-bottom: 24px;
+  }
+  .url-input-wrap:focus-within { border-color: var(--yellow); }
+  .url-prefix {
+    font-family: var(--mono);
+    font-size: 13px;
+    color: rgba(255,255,255,0.3);
+    padding: 16px 16px 16px 20px;
+    background: rgba(255,255,255,0.05);
+    border-right: 2px solid rgba(255,255,255,0.1);
+    white-space: nowrap;
+    user-select: none;
+  }
+  .url-input {
+    flex: 1;
+    background: transparent;
+    border: none;
+    outline: none;
+    font-family: var(--mono);
+    font-size: 13px;
+    color: #fff;
+    padding: 16px 20px;
+    caret-color: var(--yellow);
+  }
+  .url-input::placeholder { color: rgba(255,255,255,0.2); }
+
+  /* Options */
+  .options-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-bottom: 32px;
+  }
+  .option-chip {
+    border: 2px solid rgba(255,255,255,0.15);
+    padding: 12px 16px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    transition: border-color 0.2s, background 0.2s;
+    font-family: var(--mono);
+    font-size: 11px;
+    color: rgba(255,255,255,0.5);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    background: transparent;
+  }
+  .option-chip:hover { border-color: rgba(255,255,255,0.4); color: rgba(255,255,255,0.8); }
+  .option-chip.selected { border-color: var(--yellow); color: var(--yellow); background: rgba(232,255,0,0.05); }
+  .option-check {
+    width: 14px;
+    height: 14px;
+    border: 2px solid currentColor;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 9px;
+  }
+
+  /* Drop Zone */
+  .drop-zone {
+    flex: 1;
+    border: 2px dashed rgba(255,255,255,0.2);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 48px;
+    cursor: pointer;
+    transition: border-color 0.2s, background 0.2s;
+    min-height: 220px;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+  }
+  .drop-zone:hover, .drop-zone.drag-over {
+    border-color: var(--yellow);
+    background: rgba(232,255,0,0.04);
+  }
+  .drop-icon {
+    font-size: 48px;
+    margin-bottom: 20px;
+    display: block;
+    line-height: 1;
+    filter: grayscale(1) brightness(3);
+  }
+  .drop-title {
+    font-family: var(--mono);
+    font-size: 14px;
+    font-weight: 700;
+    color: #fff;
+    letter-spacing: 0.05em;
+    margin-bottom: 8px;
+  }
+  .drop-sub {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: rgba(255,255,255,0.3);
+    letter-spacing: 0.08em;
+  }
+  .drop-browse {
+    margin-top: 20px;
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--yellow);
+    text-decoration: underline;
+    cursor: pointer;
+    background: none;
+    border: none;
+  }
+  .file-selected {
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--yellow);
+    margin-top: 12px;
+    padding: 8px 16px;
+    border: 1px solid var(--yellow);
+    background: rgba(232,255,0,0.08);
+  }
+
+  /* Submit Button */
+  .submit-btn {
+    width: 100%;
+    margin-top: 28px;
+    padding: 20px;
+    background: var(--yellow);
+    border: 2px solid var(--yellow);
+    font-family: var(--mono);
+    font-size: 14px;
+    font-weight: 700;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--black);
+    cursor: pointer;
+    transition: transform 0.1s, box-shadow 0.1s;
+    box-shadow: 6px 6px 0 rgba(232,255,0,0.3);
+    position: relative;
+    overflow: hidden;
+  }
+  .submit-btn:hover {
+    transform: translate(-2px, -2px);
+    box-shadow: 8px 8px 0 rgba(232,255,0,0.4);
+  }
+  .submit-btn:active { transform: translate(2px, 2px); box-shadow: 2px 2px 0 rgba(232,255,0,0.2); }
+  .submit-btn:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+  }
+
+  /* PROCESSING OVERLAY */
+  .processing-overlay {
+    position: absolute;
+    inset: 0;
+    background: var(--black);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    z-index: 10;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s;
+  }
+  .processing-overlay.active { opacity: 1; pointer-events: all; }
+  .proc-title {
+    font-family: var(--mono);
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--yellow);
+    letter-spacing: 0.1em;
+    margin-bottom: 32px;
+    text-transform: uppercase;
+  }
+  .proc-log {
+    width: 100%;
+    max-width: 480px;
+    font-family: var(--mono);
+    font-size: 12px;
+    color: rgba(255,255,255,0.6);
+    line-height: 2;
+    min-height: 160px;
+  }
+  .proc-log .log-line { display: block; }
+  .proc-log .log-line.done { color: #00FF7F; }
+  .proc-log .log-line.active { color: var(--yellow); }
+  .proc-log .log-line.active::after {
+    content: '█';
+    animation: blink 1s step-end infinite;
+  }
+  @keyframes blink { 50% { opacity: 0; } }
+  .proc-bar-wrap {
+    width: 100%;
+    max-width: 480px;
+    height: 4px;
+    background: rgba(255,255,255,0.1);
+    margin-top: 24px;
+    overflow: hidden;
+  }
+  .proc-bar {
+    height: 100%;
+    background: var(--yellow);
+    transition: width 0.4s ease;
+  }
+  .proc-cancel {
+    margin-top: 32px;
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: rgba(255,255,255,0.3);
+    background: none;
+    border: none;
+    cursor: pointer;
+    text-decoration: underline;
+  }
+  .proc-cancel:hover { color: var(--red); }
+
+  /* HOW IT WORKS */
+  .how-section {
+    border-bottom: var(--border);
+  }
+  .section-header {
+    display: flex;
+    align-items: baseline;
+    gap: 24px;
+    padding: 48px 48px 0;
+    border-bottom: var(--border);
+    padding-bottom: 32px;
+  }
+  .section-num {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    opacity: 0.4;
+  }
+  .section-title {
+    font-size: clamp(28px, 4vw, 48px);
+    font-weight: 800;
+    letter-spacing: -0.03em;
+    text-transform: uppercase;
+    line-height: 1;
+  }
+  .steps-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+  }
+  .step {
+    padding: 48px 40px;
+    border-right: var(--border);
+    position: relative;
+    transition: background 0.2s;
+  }
+  .step:last-child { border-right: none; }
+  .step:hover { background: var(--yellow); }
+  .step-num {
+    font-family: var(--mono);
+    font-size: 64px;
+    font-weight: 700;
+    opacity: 0.08;
+    line-height: 1;
+    position: absolute;
+    top: 32px;
+    right: 24px;
+    letter-spacing: -0.04em;
+  }
+  .step-icon {
+    font-size: 32px;
+    margin-bottom: 24px;
+    display: block;
+  }
+  .step-name {
+    font-size: 20px;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    margin-bottom: 12px;
+    text-transform: uppercase;
+  }
+  .step-desc {
+    font-size: 14px;
+    line-height: 1.6;
+    opacity: 0.6;
+  }
+
+  /* FEATURES */
+  .features-section { border-bottom: var(--border); }
+  .features-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+  }
+  .feature-card {
+    padding: 48px 40px;
+    border-right: var(--border);
+    border-bottom: var(--border);
+  }
+  .feature-card:nth-child(3n) { border-right: none; }
+  .feature-card:nth-child(n+4) { border-bottom: none; }
+  .feature-tag {
+    display: inline-block;
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    border: 2px solid var(--black);
+    padding: 4px 10px;
+    margin-bottom: 24px;
+  }
+  .feature-name {
+    font-size: 22px;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    margin-bottom: 12px;
+    text-transform: uppercase;
+    line-height: 1.2;
+  }
+  .feature-desc {
+    font-size: 14px;
+    line-height: 1.65;
+    opacity: 0.6;
+  }
+
+  /* MARQUEE BELT */
+  .belt {
+    background: var(--yellow);
+    border-top: var(--border);
+    border-bottom: var(--border);
+    padding: 18px 0;
+    overflow: hidden;
+    white-space: nowrap;
+  }
+  .belt-track {
+    display: inline-block;
+    animation: ticker 20s linear infinite;
+    font-family: var(--mono);
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+  .belt-track span { margin: 0 32px; }
+  .belt-track .sep { opacity: 0.4; }
+
+  /* FOOTER */
+  footer {
+    padding: 64px 48px 48px;
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 0;
+    border-top: var(--border);
+  }
+  .footer-brand {
+    border-right: var(--border);
+    padding-right: 48px;
+  }
+  .footer-logo {
+    font-family: var(--mono);
+    font-size: 24px;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    margin-bottom: 16px;
+  }
+  .footer-tagline {
+    font-size: 14px;
+    opacity: 0.5;
+    line-height: 1.6;
+    max-width: 220px;
+  }
+  .footer-links {
+    padding: 0 48px;
+    border-right: var(--border);
+  }
+  .footer-links h4 {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    opacity: 0.4;
+    margin-bottom: 20px;
+  }
+  .footer-links a {
+    display: block;
+    font-size: 15px;
+    font-weight: 500;
+    text-decoration: none;
+    color: var(--black);
+    margin-bottom: 12px;
+    transition: color 0.1s;
+  }
+  .footer-links a:hover { color: var(--red); }
+  .footer-copy {
+    padding-left: 48px;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+  }
+  .footer-copy p {
+    font-family: var(--mono);
+    font-size: 11px;
+    opacity: 0.4;
+    line-height: 1.8;
+    letter-spacing: 0.05em;
+  }
+
+  /* TWEAKS PANEL */
+  .tweaks-panel {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    background: var(--black);
+    border: 3px solid var(--yellow);
+    box-shadow: 8px 8px 0 var(--yellow);
+    padding: 24px;
+    z-index: 999;
+    width: 280px;
+    display: none;
+  }
+  .tweaks-panel.visible { display: block; }
+  .tweaks-title {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--yellow);
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .tweaks-close { background: none; border: none; color: var(--yellow); cursor: pointer; font-size: 18px; }
+  .tweak-row { margin-bottom: 16px; }
+  .tweak-label {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: rgba(255,255,255,0.5);
+    margin-bottom: 8px;
+    display: block;
+  }
+  .tweak-options { display: flex; gap: 8px; flex-wrap: wrap; }
+  .tweak-opt {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.08em;
+    padding: 6px 12px;
+    border: 2px solid rgba(255,255,255,0.2);
+    background: transparent;
+    color: rgba(255,255,255,0.5);
+    cursor: pointer;
+    text-transform: uppercase;
+    transition: all 0.15s;
+  }
+  .tweak-opt:hover { border-color: rgba(255,255,255,0.5); color: #fff; }
+  .tweak-opt.active { border-color: var(--yellow); color: var(--yellow); background: rgba(232,255,0,0.1); }
+
+  /* Noise overlay — generated via canvas at runtime */
+  #noise-overlay {
+    position: fixed;
+    inset: 0;
+    opacity: 0.03;
+    pointer-events: none;
+    z-index: 9999;
+  }
+
+  /* Responsive */
+  @media (max-width: 900px) {
+    .hero { grid-template-columns: 1fr; }
+    .hero-left { border-right: none; border-bottom: var(--border); min-height: auto; }
+    .steps-grid { grid-template-columns: 1fr 1fr; }
+    .step:nth-child(2) { border-right: none; }
+    .step:nth-child(3) { border-right: var(--border); border-top: var(--border); }
+    .step:nth-child(4) { border-top: var(--border); border-right: none; }
+    .features-grid { grid-template-columns: 1fr 1fr; }
+    .feature-card:nth-child(3n) { border-right: var(--border); }
+    .feature-card:nth-child(2n) { border-right: none; }
+    footer { grid-template-columns: 1fr; gap: 40px; }
+    .footer-brand, .footer-links { border-right: none; border-bottom: var(--border); padding-right: 0; padding-bottom: 40px; }
+    .footer-links { padding-left: 0; }
+    .footer-copy { padding-left: 0; }
+    nav { padding: 16px 24px; }
+    .hero-left { padding: 48px 24px; }
+    .panel-body { padding: 24px; }
+  }
+</style>
+</head>
+<body>
+
+<canvas id="noise-overlay"></canvas>
+<script>
+(function(){
+  const c = document.getElementById('noise-overlay');
+  const w = 256, h = 256;
+  c.width = w; c.height = h;
+  const ctx = c.getContext('2d');
+  const img = ctx.createImageData(w, h);
+  for (let i = 0; i < img.data.length; i += 4) {
+    const v = Math.random() * 255 | 0;
+    img.data[i] = img.data[i+1] = img.data[i+2] = v;
+    img.data[i+3] = 255;
+  }
+  ctx.putImageData(img, 0, 0);
+  c.style.backgroundImage = 'none';
+})();
+</script>
+
+<!-- Ticker -->
+<div class="ticker-wrap" aria-hidden="true">
+  <div class="ticker-track" id="ticker">
+    <span>YOUR CODE HAS A MANUAL NOW</span><span>✦</span><span>BUILT FOR VIBE CODERS</span><span>✦</span><span>GITHUB · GITLAB · BITBUCKET</span><span>✦</span><span>UNDERSTAND WHAT YOU SHIPPED</span><span>✦</span><span>MAINTAIN LIKE A PRO</span><span>✦</span><span>REPO → OWNER'S MANUAL</span><span>✦</span><span>YOUR CODE HAS A MANUAL NOW</span><span>✦</span><span>BUILT FOR VIBE CODERS</span><span>✦</span><span>GITHUB · GITLAB · BITBUCKET</span><span>✦</span><span>UNDERSTAND WHAT YOU SHIPPED</span><span>✦</span><span>MAINTAIN LIKE A PRO</span><span>✦</span><span>REPO → OWNER'S MANUAL</span><span>✦</span>
+  </div>
+</div>
+
+<!-- Nav -->
+<nav>
+  <a class="nav-logo" href="#">REPO<em>PDF</em></a>
+  <ul class="nav-links">
+    <li><a href="#">How it works</a></li>
+    <li><a href="#">Docs</a></li>
+    <li><a href="#">Pricing</a></li>
+    <li><a href="#">API</a></li>
+  </ul>
+  <button class="nav-cta">Get Started →</button>
+</nav>
+
+<!-- APP (React) -->
+<div id="root"></div>
+
+<!-- Static sections -->
+<div id="static-sections">
+  <!-- Belt -->
+  <div class="belt">
+    <div class="belt-track">
+      <span>What Did I Even Build?</span><span class="sep">///</span>
+      <span>Understand Your Stack</span><span class="sep">///</span>
+      <span>Maintain Like a Pro</span><span class="sep">///</span>
+      <span>Plain English Explanations</span><span class="sep">///</span>
+      <span>Ship Fast. Know What You Shipped.</span><span class="sep">///</span>
+      <span>Vibe Code. Read the Manual.</span><span class="sep">///</span>
+      <span>What Did I Even Build?</span><span class="sep">///</span>
+      <span>Understand Your Stack</span><span class="sep">///</span>
+      <span>Maintain Like a Pro</span><span class="sep">///</span>
+      <span>Plain English Explanations</span><span class="sep">///</span>
+      <span>Ship Fast. Know What You Shipped.</span><span class="sep">///</span>
+      <span>Vibe Code. Read the Manual.</span><span class="sep">///</span>
+    </div>
+  </div>
+
+  <!-- How It Works -->
+  <section class="how-section">
+    <div class="section-header">
+      <span class="section-num">01 /</span>
+      <h2 class="section-title">How It Works</h2>
+    </div>
+    <div class="steps-grid">
+      <div class="step">
+        <span class="step-num">01</span>
+        <span class="step-icon">⬡</span>
+        <h3 class="step-name">Drop It</h3>
+        <p class="step-desc">Paste your GitHub, GitLab, or Bitbucket URL — or upload a ZIP straight from your machine.</p>
+      </div>
+      <div class="step">
+        <span class="step-num">02</span>
+        <span class="step-icon">⬡</span>
+        <h3 class="step-name">We Read It</h3>
+        <p class="step-desc">We traverse every file, understand your stack, map dependencies, and identify the key moving parts.</p>
+      </div>
+      <div class="step">
+        <span class="step-num">03</span>
+        <span class="step-icon">⬡</span>
+        <h3 class="step-name">We Explain It</h3>
+        <p class="step-desc">Plain English. What each file does, why it exists, what breaks if you touch it, and how it all connects.</p>
+      </div>
+      <div class="step">
+        <span class="step-num">04</span>
+        <span class="step-icon">⬡</span>
+        <h3 class="step-name">You Own It</h3>
+        <p class="step-desc">Download your owner's manual as a PDF. Read it like a book. Maintain your app like you built it yourself.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Features -->
+  <section class="features-section">
+    <div class="section-header">
+      <span class="section-num">02 /</span>
+      <h2 class="section-title">Features</h2>
+    </div>
+    <div class="features-grid">
+      <div class="feature-card">
+        <span class="feature-tag">Understand</span>
+        <h3 class="feature-name">Plain English Breakdowns</h3>
+        <p class="feature-desc">Every component, route, and function explained in plain language. No jargon. Written for the person who shipped it, not who wrote it.</p>
+      </div>
+      <div class="feature-card">
+        <span class="feature-tag">Navigate</span>
+        <h3 class="feature-name">Architecture Map</h3>
+        <p class="feature-desc">A written map of how your app is structured — frontend, backend, database, APIs. See the whole car before you open the hood.</p>
+      </div>
+      <div class="feature-card">
+        <span class="feature-tag">Maintain</span>
+        <h3 class="feature-name">Maintenance Guides</h3>
+        <p class="feature-desc">Flagged areas that need attention. How to add features safely. What to avoid touching. Think of it as the service schedule for your codebase.</p>
+      </div>
+      <div class="feature-card">
+        <span class="feature-tag">Learn</span>
+        <h3 class="feature-name">Concept Explanations</h3>
+        <p class="feature-desc">Not just what your code does — but why. We surface the patterns your AI used so you actually level up while you read.</p>
+      </div>
+      <div class="feature-card">
+        <span class="feature-tag">Privacy</span>
+        <h3 class="feature-name">Zero Retention</h3>
+        <p class="feature-desc">Your source code is never stored, logged, or used for training. Processed ephemerally. Gone the moment your manual is ready.</p>
+      </div>
+      <div class="feature-card">
+        <span class="feature-tag">Format</span>
+        <h3 class="feature-name">Print-Ready PDF</h3>
+        <p class="feature-desc">Beautifully typeset. Indexed. Sectioned. The kind of document you could actually put on a shelf. Because some things are better offline.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer>
+    <div class="footer-brand">
+      <div class="footer-logo">REPOPDF</div>
+      <p class="footer-tagline">The owner's manual for code you vibe-coded but actually need to maintain.</p>
+    </div>
+    <div class="footer-links">
+      <h4>Product</h4>
+      <a href="#">Documentation</a>
+      <a href="#">API Reference</a>
+      <a href="#">Changelog</a>
+      <a href="#">Status</a>
+    </div>
+    <div class="footer-copy">
+      <p>© 2026 REPOPDF<br>Built for vibe coders.<br>No account required.</p>
+    </div>
+  </footer>
+</div>
+
+<!-- Tweaks Panel -->
+<div class="tweaks-panel" id="tweaks-panel">
+  <div class="tweaks-title">
+    <span>Tweaks</span>
+    <button class="tweaks-close" id="tweaks-close">×</button>
+  </div>
+  <div class="tweak-row">
+    <span class="tweak-label">Accent Color</span>
+    <div class="tweak-options">
+      <button class="tweak-opt active" data-tweak="accent" data-val="yellow">Yellow</button>
+      <button class="tweak-opt" data-tweak="accent" data-val="cyan">Cyan</button>
+      <button class="tweak-opt" data-tweak="accent" data-val="red">Red</button>
+    </div>
+  </div>
+  <div class="tweak-row">
+    <span class="tweak-label">Background</span>
+    <div class="tweak-options">
+      <button class="tweak-opt active" data-tweak="bg" data-val="cream">Cream</button>
+      <button class="tweak-opt" data-tweak="bg" data-val="white">White</button>
+      <button class="tweak-opt" data-tweak="bg" data-val="dark">Dark</button>
+    </div>
+  </div>
+  <div class="tweak-row">
+    <span class="tweak-label">Border Weight</span>
+    <div class="tweak-options">
+      <button class="tweak-opt" data-tweak="border" data-val="thin">Thin</button>
+      <button class="tweak-opt active" data-tweak="border" data-val="medium">Medium</button>
+      <button class="tweak-opt" data-tweak="border" data-val="heavy">Heavy</button>
+    </div>
+  </div>
+</div>
+
+<script type="text/babel">
+const { useState, useEffect, useRef, useCallback } = React;
+
+const TWEAK_DEFAULTS = /*EDITMODE-BEGIN*/{
+  "accent": "yellow",
+  "bg": "cream",
+  "border": "medium"
+}/*EDITMODE-END*/;
+
+const OPTIONS = [
+  { id: 'readme', label: 'Architecture Map' },
+  { id: 'tree', label: 'Maintenance Guide' },
+  { id: 'syntax', label: 'Concept Glossary' },
+  { id: 'linenum', label: 'Inline Code Notes' },
+];
+
+const PROC_STEPS = [
+  'Connecting to repository...',
+  'Reading file structure...',
+  'Mapping architecture...',
+  'Analysing dependencies...',
+  'Writing plain English explanations...',
+  'Compiling maintenance guide...',
+  'Typesetting your manual...',
+  'Your manual is ready.',
+];
+
+function App() {
+  const [mode, setMode] = useState('url'); // 'url' | 'zip'
+  const [url, setUrl] = useState('');
+  const [file, setFile] = useState(null);
+  const [dragOver, setDragOver] = useState(false);
+  const [options, setOptions] = useState({ readme: true, tree: true, syntax: true, linenum: false });
+  const [processing, setProcessing] = useState(false);
+  const [procStep, setProcStep] = useState(0);
+  const [done, setDone] = useState(false);
+  const fileRef = useRef();
+  const pollingRef = useRef();
+  const [sessionId, setSessionId] = useState(null);
+  const [error, setError] = useState(null);
+
+  const canSubmit = mode === 'url' ? url.length > 5 : !!file;
+
+  const optionsPayload = {
+    architecture_map: options.readme,
+    maintenance_guide: options.tree,
+    concept_glossary: options.syntax,
+    inline_code_notes: options.linenum,
+  };
+
+  const startProcessing = async () => {
+    if (!canSubmit) return;
+    setProcessing(true);
+    setProcStep(0);
+    setDone(false);
+    setError(null);
+
+    const fd = new FormData();
+    if (mode === 'url') {
+      fd.append('url', 'https://' + url);
+    } else {
+      fd.append('zip_file', file);
+    }
+    fd.append('options_json', JSON.stringify(optionsPayload));
+
+    try {
+      const res = await fetch('/analyse', { method: 'POST', body: fd });
+      if (!res.ok) {
+        const j = await res.json();
+        throw new Error(j.detail || 'Request failed');
+      }
+      const { session_id } = await res.json();
+      setSessionId(session_id);
+
+      pollingRef.current = setInterval(async () => {
+        const sr = await fetch(`/status/${session_id}`);
+        const s = await sr.json();
+        const step = Math.min(
+          Math.round((s.progress / 100) * (PROC_STEPS.length - 1)),
+          PROC_STEPS.length - 2
+        );
+        setProcStep(step);
+        if (s.status === 'complete') {
+          clearInterval(pollingRef.current);
+          setProcStep(PROC_STEPS.length - 1);
+          setDone(true);
+        } else if (s.status === 'failed') {
+          clearInterval(pollingRef.current);
+          setError(s.error || 'Analysis failed.');
+          setProcessing(false);
+        }
+      }, 2000);
+    } catch (e) {
+      setError(e.message);
+      setProcessing(false);
+    }
+  };
+
+  const cancelProcessing = () => {
+    clearInterval(pollingRef.current);
+    setProcessing(false);
+    setProcStep(0);
+    setDone(false);
+    setSessionId(null);
+    setError(null);
+  };
+
+  const downloadManual = async () => {
+    const res = await fetch(`/export/${sessionId}`);
+    const blob = await res.blob();
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'manual.pdf';
+    a.click();
+  };
+
+  const toggleOpt = (id) => setOptions(o => ({ ...o, [id]: !o[id] }));
+
+  const onDrop = useCallback((e) => {
+    e.preventDefault();
+    setDragOver(false);
+    const f = e.dataTransfer.files[0];
+    if (f && (f.name.endsWith('.zip') || f.type === 'application/zip')) {
+      setFile(f);
+    }
+  }, []);
+
+  const progress = PROC_STEPS.length > 1 
+    ? Math.round((procStep / (PROC_STEPS.length - 1)) * 100)
+    : 0;
+
+  return (
+    <div className="hero">
+      {/* LEFT */}
+      <div className="hero-left">
+        <div>
+          <p className="hero-eyebrow">// The Owner's Manual for Your Code</p>
+          <h1 className="hero-title">
+            <span>YOUR</span>
+            <span className="line-accent">CODE</span>
+            <span className="line-stroke">MANUAL</span>
+          </h1>
+          <p className="hero-desc">
+            You shipped it with AI. Now actually understand it. Drop your repo and we'll generate 
+            a plain-English owner's manual — what was built, how it works, and how to maintain it. 
+            Like a Haynes manual. But for your app.
+          </p>
+        </div>
+        <div className="hero-stats">
+          <div className="stat">
+            <span className="stat-num">100%</span>
+            <span className="stat-label">Plain English</span>
+          </div>
+          <div className="stat">
+            <span className="stat-num">&lt;60s</span>
+            <span className="stat-label">Your Manual</span>
+          </div>
+          <div className="stat">
+            <span className="stat-num">0KB</span>
+            <span className="stat-label">Data Stored</span>
+          </div>
+        </div>
+      </div>
+
+      {/* RIGHT - PANEL */}
+      <div className="hero-right" style={{ position: 'relative' }}>
+        <div className="panel-header">
+          <div className="panel-dots">
+            <div className="dot red" />
+            <div className="dot yellow" />
+            <div className="dot green" />
+          </div>
+          <span className="panel-title">repopdf — manual generator</span>
+        </div>
+
+        <div className="panel-body">
+          {/* Tabs */}
+          <div className="mode-tabs">
+            <div className={`tab-slider ${mode === 'zip' ? 'right' : 'left'}`} />
+            <button className={`mode-tab ${mode === 'url' ? 'active' : ''}`} onClick={() => setMode('url')}>
+              ⌁ Paste URL
+            </button>
+            <button className={`mode-tab ${mode === 'zip' ? 'active' : ''}`} onClick={() => setMode('zip')}>
+              ⊞ Upload ZIP
+            </button>
+          </div>
+
+          {mode === 'url' ? (
+            <div className="url-section">
+              <p className="input-label">Repository URL</p>
+              <div className="url-input-wrap">
+                <span className="url-prefix">https://</span>
+                <input
+                  className="url-input"
+                  type="text"
+                  placeholder="github.com/owner/repo"
+                  value={url}
+                  onChange={e => setUrl(e.target.value)}
+                  onKeyDown={e => e.key === 'Enter' && startProcessing()}
+                  spellCheck={false}
+                  autoComplete="off"
+                />
+              </div>
+
+              <p className="input-label">Options</p>
+              <div className="options-row">
+                {OPTIONS.map(o => (
+                  <button
+                    key={o.id}
+                    className={`option-chip ${options[o.id] ? 'selected' : ''}`}
+                    onClick={() => toggleOpt(o.id)}
+                  >
+                    <span className="option-check">{options[o.id] ? '✓' : ''}</span>
+                    {o.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+          ) : (
+            <div className="url-section">
+              <div
+                className={`drop-zone ${dragOver ? 'drag-over' : ''}`}
+                onDragOver={e => { e.preventDefault(); setDragOver(true); }}
+                onDragLeave={() => setDragOver(false)}
+                onDrop={onDrop}
+                onClick={() => fileRef.current?.click()}
+              >
+                <span className="drop-icon">⬡</span>
+                <p className="drop-title">{file ? file.name : 'Drop your ZIP here'}</p>
+                <p className="drop-sub">{file ? `${(file.size / 1024).toFixed(1)} KB` : '.zip files only'}</p>
+                {!file && <button className="drop-browse" onClick={e => { e.stopPropagation(); fileRef.current?.click(); }}>Browse files</button>}
+                <input
+                  ref={fileRef}
+                  type="file"
+                  accept=".zip"
+                  style={{ display: 'none' }}
+                  onChange={e => setFile(e.target.files[0])}
+                />
+              </div>
+              <p className="input-label" style={{ marginTop: 24 }}>Options</p>
+              <div className="options-row">
+                {OPTIONS.map(o => (
+                  <button
+                    key={o.id}
+                    className={`option-chip ${options[o.id] ? 'selected' : ''}`}
+                    onClick={() => toggleOpt(o.id)}
+                  >
+                    <span className="option-check">{options[o.id] ? '✓' : ''}</span>
+                    {o.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
+          <button className="submit-btn" onClick={done ? downloadManual : startProcessing} disabled={!canSubmit}>
+            {done ? '↓ Download Manual' : 'Generate My Manual →'}
+          </button>
+        </div>
+
+        {/* Processing Overlay */}
+        <div className={`processing-overlay ${processing ? 'active' : ''}`}>
+          <p className="proc-title">
+            {done ? '// Manual Ready' : '// Building Your Manual...'}
+          </p>
+          <div className="proc-log">
+            {PROC_STEPS.map((step, i) => {
+              let cls = 'log-line';
+              if (i < procStep) cls += ' done';
+              else if (i === procStep) cls += ' active';
+              return (
+                <span key={i} className={cls} style={{ opacity: i > procStep + 1 ? 0.25 : 1 }}>
+                  {i < procStep ? '✓ ' : i === procStep ? '→ ' : '  '}{step}
+                </span>
+              );
+            })}
+          </div>
+          <div className="proc-bar-wrap">
+            <div className="proc-bar" style={{ width: `${progress}%` }} />
+          </div>
+          {error && <p style={{ color: 'var(--red)', fontFamily: 'var(--mono)', fontSize: 12, marginTop: 16 }}>{error}</p>}
+          {done ? (
+            <button className="submit-btn" style={{ maxWidth: 300, marginTop: 32 }} onClick={downloadManual}>
+              ↓ Download Manual
+            </button>
+          ) : (
+            <button className="proc-cancel" onClick={cancelProcessing}>Cancel</button>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+</script>
+
+<script>
+// Tweaks system
+const TWEAK_COLORS = {
+  yellow: '#E8FF00',
+  cyan: '#00FFEA',
+  red: '#FF2B2B',
+};
+const TWEAK_BG = {
+  cream: '#F2EDE3',
+  white: '#FFFFFF',
+  dark: '#141414',
+};
+const TWEAK_BORDER = {
+  thin: '1px solid #0A0A0A',
+  medium: '3px solid #0A0A0A',
+  heavy: '5px solid #0A0A0A',
+};
+const TWEAK_FG = {
+  cream: '#0A0A0A',
+  white: '#0A0A0A',
+  dark: '#F2EDE3',
+};
+
+let currentTweaks = { .../*EDITMODE-BEGIN*/{"accent":"yellow","bg":"cream","border":"medium"}/*EDITMODE-END*/ };
+
+function applyTweaks(t) {
+  const root = document.documentElement;
+  root.style.setProperty('--yellow', TWEAK_COLORS[t.accent] || TWEAK_COLORS.yellow);
+  root.style.setProperty('--cream', TWEAK_BG[t.bg] || TWEAK_BG.cream);
+  root.style.setProperty('--black', TWEAK_FG[t.bg] || TWEAK_FG.cream);
+  root.style.setProperty('--border', TWEAK_BORDER[t.border] || TWEAK_BORDER.medium);
+  document.body.style.background = TWEAK_BG[t.bg] || TWEAK_BG.cream;
+}
+
+applyTweaks(currentTweaks);
+
+// Tweaks panel toggle
+window.addEventListener('message', (e) => {
+  if (e.data?.type === '__activate_edit_mode') {
+    document.getElementById('tweaks-panel').classList.add('visible');
+  } else if (e.data?.type === '__deactivate_edit_mode') {
+    document.getElementById('tweaks-panel').classList.remove('visible');
+  }
+});
+window.parent.postMessage({ type: '__edit_mode_available' }, '*');
+
+document.getElementById('tweaks-close')?.addEventListener('click', () => {
+  document.getElementById('tweaks-panel').classList.remove('visible');
+  window.parent.postMessage({ type: '__deactivate_edit_mode' }, '*');
+});
+
+document.querySelectorAll('.tweak-opt').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const tweak = btn.dataset.tweak;
+    const val = btn.dataset.val;
+    document.querySelectorAll(`[data-tweak="${tweak}"]`).forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    currentTweaks[tweak] = val;
+    applyTweaks(currentTweaks);
+    window.parent.postMessage({ type: '__edit_mode_set_keys', edits: currentTweaks }, '*');
+  });
+});
+</script>
+</body>
+</html>
