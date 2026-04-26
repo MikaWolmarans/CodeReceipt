@@ -1051,6 +1051,9 @@ function App() {
       const res = await fetch('/analyse', { method: 'POST', body: fd });
       if (!res.ok) {
         const j = await res.json();
+        if (res.status === 503) {
+          throw new Error('CodeReceipt is temporarily offline for maintenance. Please check back soon.');
+        }
         throw new Error(j.detail || 'Request failed');
       }
       const { session_id } = await res.json();

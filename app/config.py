@@ -9,6 +9,8 @@ class Settings(BaseSettings):
 
     app_name: str = 'CodeReceipt'
 
+    maintenance_mode: bool = Field(default=False, alias='MAINTENANCE_MODE')
+
     mongodb_uri: str = Field(alias='MONGODB_URI')
     frontend_url: str = Field(alias='FRONTEND_URL')
 

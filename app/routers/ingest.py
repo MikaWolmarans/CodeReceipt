@@ -54,6 +54,9 @@ async def analyse(
 ) -> AnalyseResponse:
     settings = get_settings()
 
+    if settings.maintenance_mode:
+        raise HTTPException(status_code=503, detail='Service is temporarily unavailable for maintenance. Please check back soon.')
+
     if session_id:
         existing = await session_service.get_session(session_id)
         if not existing:
