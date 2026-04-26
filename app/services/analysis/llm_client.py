@@ -1,8 +1,11 @@
 import json
+import logging
 
 import httpx
 
 from app.config import get_settings
+
+logger = logging.getLogger(__name__)
 
 
 class LLMClient:
@@ -11,6 +14,8 @@ class LLMClient:
         self.api_key = settings.openrouter_api_key
         self.model = settings.openrouter_model
         self.max_tokens = settings.openrouter_max_tokens
+        key_preview = f'{self.api_key[:8]}...' if self.api_key and len(self.api_key) > 8 else repr(self.api_key)
+        logger.info('LLMClient initialised — model: %s | key: %s', self.model, key_preview)
 
     async def complete(self, prompt: str, temperature: float = 0.2) -> str:
         headers = {
@@ -28,6 +33,8 @@ class LLMClient:
         }
         async with httpx.AsyncClient(timeout=120) as client:
             resp = await client.post('https://openrouter.ai/api/v1/chat/completions', headers=headers, json=payload)
+            if not resp.is_success:
+                logger.error('OpenRouter error %s: %s', resp.status_code, resp.text)
             resp.raise_for_status()
             data = resp.json()
             return data['choices'][0]['message']['content']
