@@ -63,7 +63,8 @@ class LLMClient:
                     resp = await client.post(self.endpoint, headers=headers, json=payload)
             if resp.status_code == 429:
                 wait = (2 ** attempt) + random.uniform(0, 1)
-                logger.warning('%s 429 on attempt %d — retrying in %.1fs', self.provider, attempt + 1, wait)
+                logger.warning('%s 429 on attempt %d — body: %s — retrying in %.1fs',
+                               self.provider, attempt + 1, resp.text, wait)
                 await asyncio.sleep(wait)
                 continue
             if not resp.is_success:
