@@ -1,90 +1,174 @@
 import asyncio
 import json
 import logging
-import random
-import re
 
-import httpx
+from openai import AsyncOpenAI
 
 from app.config import get_settings
 
 logger = logging.getLogger(__name__)
 
-# Max concurrent LLM requests — free tier models rate-limit on bursts
-_semaphore = asyncio.Semaphore(2)
 
-PROVIDER_ENDPOINTS = {
-    'openrouter': 'https://openrouter.ai/api/v1/chat/completions',
-    'gemini': 'https://generativelanguage.googleapis.com/v1beta/openai/chat/completions',
-    'groq': 'https://api.groq.com/openai/v1/chat/completions',
-}
+def _make_client(settings) -> AsyncOpenAI:
+    """Create an AsyncOpenAI client pointed at the configured base URL."""
+    return AsyncOpenAI(
+        api_key=settings.llm_api_key or 'missing',
+        base_url=settings.llm_base_url,
+        default_headers={
+            'OR-Site-URL': 'https://www.codereceipt.site',
+            'OR-App-Name': 'CodeReceipt',
+        },
+        timeout=120,
+    )
+
+
+class LLMSession:
+    """
+    Tracks LLM calls within a single analysis run.
+    Raises RuntimeError if the per-analysis request cap is exceeded.
+    """
+
+    def __init__(self, client: AsyncOpenAI, model: str,
+                 max_tokens_per_request: int, max_requests: int) -> None:
+        self._client = client
+        self._model = model
+        self._max_tokens = max_tokens_per_request
+        self._max_requests = max_requests
+        self._call_count = 0
+
+    async def complete(self, prompt: str, temperature: float = 0.2,
+                       max_tokens: int | None = None) -> str:
+        self._call_count += 1
+        if self._call_count > self._max_requests:
+            raise RuntimeError(
+                f'Analysis aborted: exceeded the maximum of {self._max_requests} '
+                'LLM requests per analysis to protect service credits.'
+            )
+
+        effective_max_tokens = min(max_tokens or self._max_tokens, self._max_tokens)
+        messages = [
+            {
+                'role': 'system',
+                'content': 'You are an expert technical writer focused on plain-English explanations.',
+            },
+            {'role': 'user', 'content': prompt},
+        ]
+
+        # 5xx: retry up to 3 times with a 5 s fixed delay
+        for attempt in range(3):
+            try:
+                response = await self._client.chat.completions.create(
+                    model=self._model,
+                    messages=messages,
+                    temperature=temperature,
+                    max_tokens=effective_max_tokens,
+                )
+                return response.choices[0].message.content
+
+            except Exception as exc:
+                status = getattr(exc, 'status_code', None)
+
+                # 402 — insufficient credits; fail immediately, no retry
+                if status == 402:
+                    logger.critical(
+                        'LLM provider returned 402 (insufficient credits). '
+                        'Top up credits at openrouter.ai to resume service.'
+                    )
+                    raise RuntimeError(
+                        'Service credit limit reached. Please try again later.'
+                    ) from exc
+
+                # 429 — rate limited; honour Retry-After header exactly
+                if status == 429:
+                    retry_after = _extract_retry_after(exc)
+                    logger.warning(
+                        'LLM 429 on attempt %d — waiting %.1fs (Retry-After)',
+                        attempt + 1, retry_after,
+                    )
+                    await asyncio.sleep(retry_after)
+                    continue  # retry without consuming an attempt slot
+
+                # Other 4xx — bad request, wrong model, auth failure; fail fast
+                if status is not None and 400 <= status < 500:
+                    logger.error('LLM %s error (no retry): %s', status, exc)
+                    raise RuntimeError(
+                        f'LLM request failed with status {status}.'
+                    ) from exc
+
+                # 5xx or network error — retry with fixed 5 s delay
+                if attempt < 2:
+                    logger.warning(
+                        'LLM error on attempt %d (%s) — retrying in 5s',
+                        attempt + 1, exc,
+                    )
+                    await asyncio.sleep(5)
+                    continue
+
+                # All retries exhausted
+                logger.error('LLM request failed after 3 attempts: %s', exc)
+                raise RuntimeError('LLM request failed after retries.') from exc
+
+        raise RuntimeError('LLM request failed after retries.')  # unreachable safety net
+
+
+def _extract_retry_after(exc: Exception) -> float:
+    """Pull the Retry-After value (seconds) out of an OpenAI API error."""
+    # openai SDK wraps the raw response; try the headers dict first
+    response = getattr(exc, 'response', None)
+    if response is not None:
+        headers = getattr(response, 'headers', {})
+        ra = headers.get('retry-after') or headers.get('Retry-After')
+        if ra:
+            try:
+                return float(ra)
+            except ValueError:
+                pass
+
+    # Fall back to parsing the error body text
+    body = str(exc)
+    import re
+    match = re.search(r'try again in ([\d.]+)s', body)
+    if match:
+        return float(match.group(1)) + 1.0
+
+    return 10.0  # safe default if no header or body hint
 
 
 class LLMClient:
+    """
+    Module-level singleton.  Call `new_session()` for each analysis run to get
+    a fresh `LLMSession` that enforces the per-analysis request cap.
+    """
+
     def __init__(self) -> None:
         settings = get_settings()
-        self.provider = settings.llm_provider
+        self._settings = settings
+        self._openai_client = _make_client(settings)
 
-        if self.provider == 'gemini':
-            self.api_key = settings.gemini_api_key
-            self.model = settings.gemini_model
-            self.max_tokens = 4096
-        elif self.provider == 'groq':
-            self.api_key = settings.groq_api_key
-            self.model = settings.groq_model
-            self.max_tokens = 4096
-        else:  # openrouter
-            self.api_key = settings.openrouter_api_key
-            self.model = settings.openrouter_model
-            self.max_tokens = settings.openrouter_max_tokens
-
-        self.endpoint = PROVIDER_ENDPOINTS.get(self.provider, PROVIDER_ENDPOINTS['openrouter'])
-
-        if not self.api_key:
-            logger.error('%s API key is not set — LLM calls will fail', self.provider.upper())
+        if not settings.llm_api_key:
+            logger.error('LLM_API_KEY is not set — LLM calls will fail')
         else:
-            key_preview = f'{self.api_key[:8]}...' if len(self.api_key) > 8 else '***'
-            logger.info('LLMClient initialised — provider: %s | model: %s | key: %s',
-                        self.provider, self.model, key_preview)
+            key_preview = (
+                f'{settings.llm_api_key[:8]}...'
+                if len(settings.llm_api_key) > 8
+                else '***'
+            )
+            logger.info(
+                'LLMClient initialised — base_url: %s | model: %s | key: %s',
+                settings.llm_base_url,
+                settings.llm_model,
+                key_preview,
+            )
 
-    @staticmethod
-    def _parse_retry_after(body: str) -> float:
-        """Extract suggested wait seconds from provider 429 response body."""
-        match = re.search(r'try again in ([\d.]+)s', body)
-        if match:
-            return float(match.group(1)) + random.uniform(0.5, 1.5)
-        return None
-
-    async def complete(self, prompt: str, temperature: float = 0.2, max_tokens: int | None = None) -> str:
-        if not self.api_key:
-            raise RuntimeError(f'{self.provider.upper()} API key is not configured on this server.')
-        headers = {
-            'Authorization': f'Bearer {self.api_key}',
-            'Content-Type': 'application/json',
-        }
-        payload = {
-            'model': self.model,
-            'messages': [
-                {'role': 'system', 'content': 'You are an expert technical writer focused on plain-English explanations.'},
-                {'role': 'user', 'content': prompt},
-            ],
-            'temperature': temperature,
-            'max_tokens': max_tokens or self.max_tokens,
-        }
-        for attempt in range(4):
-            async with _semaphore:
-                async with httpx.AsyncClient(timeout=120) as client:
-                    resp = await client.post(self.endpoint, headers=headers, json=payload)
-            if resp.status_code == 429:
-                wait = self._parse_retry_after(resp.text) or (2 ** attempt) + random.uniform(0, 1)
-                logger.warning('%s 429 on attempt %d — retrying in %.1fs', self.provider, attempt + 1, wait)
-                await asyncio.sleep(wait)
-                continue
-            if not resp.is_success:
-                logger.error('%s error %s: %s', self.provider, resp.status_code, resp.text)
-            resp.raise_for_status()
-            return resp.json()['choices'][0]['message']['content']
-        raise RuntimeError(f'{self.provider} rate limit exceeded after retries.')
+    def new_session(self) -> LLMSession:
+        """Return a fresh LLMSession with its own call counter."""
+        s = self._settings
+        return LLMSession(
+            client=self._openai_client,
+            model=s.llm_model,
+            max_tokens_per_request=s.llm_max_tokens_per_request,
+            max_requests=s.llm_max_requests_per_analysis,
+        )
 
     @staticmethod
     def try_parse_json(text: str) -> dict:

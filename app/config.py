@@ -12,7 +12,15 @@ class Settings(BaseSettings):
     mongodb_uri: str = Field(alias='MONGODB_URI')
     frontend_url: str = Field(alias='FRONTEND_URL')
 
-    llm_provider: str = Field(default='gemini', alias='LLM_PROVIDER')
+    # --- Active LLM configuration ---
+    llm_base_url: str = Field(default='https://openrouter.ai/api/v1', alias='LLM_BASE_URL')
+    llm_api_key: Optional[str] = Field(default=None, alias='LLM_API_KEY')
+    llm_model: str = Field(default='qwen/qwen-2.5-coder-32b-instruct', alias='LLM_MODEL')
+    llm_max_tokens_per_request: int = Field(default=4096, alias='LLM_MAX_TOKENS_PER_REQUEST')
+    llm_max_requests_per_analysis: int = Field(default=8, alias='LLM_MAX_REQUESTS_PER_ANALYSIS')
+
+    # --- Legacy provider fields (kept for backwards compatibility) ---
+    llm_provider: str = Field(default='openrouter', alias='LLM_PROVIDER')
     ollama_base_url: str = Field(default='http://localhost:11434', alias='OLLAMA_BASE_URL')
     ollama_model: str = Field(default='qwen2.5-coder:1.5b', alias='OLLAMA_MODEL')
     openrouter_api_key: Optional[str] = Field(default=None, alias='OPENROUTER_API_KEY')
