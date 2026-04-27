@@ -17,10 +17,8 @@ async def export_pdf(session_id: str):
     if session.get('status') != 'complete':
         raise HTTPException(status_code=409, detail='Analysis is not complete yet.')
 
-    analysis = session.get('analysis', {})
-    synthesis = analysis.get('synthesis', {})
-    repo_name = analysis.get('repo_name', 'repository')
-    pdf_bytes = build_pdf_bytes(repo_name, session.get('stack', {}), synthesis)
+    repo_name = session.get('analysis', {}).get('repo_name', 'repository')
+    pdf_bytes = await build_pdf_bytes(session)
     await session_service.update_session(session_id, pdf_delivered=True)
 
     return StreamingResponse(

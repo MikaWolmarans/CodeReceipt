@@ -16,7 +16,7 @@ class PdfRenderError(Exception):
     pass
 
 
-TEMPLATE_PATH = Path(__file__).parent / 'manual_template.html'
+TEMPLATE_PATH = Path(__file__).parent / 'template.html'
 
 
 def _text(value: Any, fallback: str = '') -> str:
