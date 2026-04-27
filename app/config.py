@@ -77,6 +77,7 @@ class Settings(BaseSettings):
     log_level: str = Field(default='INFO', alias='LOG_LEVEL')
 
     resend_api_key: Optional[str] = Field(default=None, alias='RESEND_API_KEY')
+    resend_template_id: Optional[str] = Field(default=None, alias='RESEND_TEMPLATE_ID')
     from_email: str = Field(default='CodeReceipt <noreply@codereceipt.app>', alias='FROM_EMAIL')
     export_link_ttl_seconds: int = Field(default=86400, alias='EXPORT_LINK_TTL_SECONDS')
 
