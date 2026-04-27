@@ -1,495 +1,1028 @@
 <!DOCTYPE html>
+<!--
+  ╔══════════════════════════════════════════════════════════════════╗
+  ║  CodeReceipt — Owner's Manual PDF Template                      ║
+  ║  Version: 1.0.0                                                 ║
+  ║                                                                 ║
+  ║  USAGE                                                          ║
+  ║  This file is a Mustache/Handlebars-style HTML template.        ║
+  ║  {{VARIABLE}} = string substitution                             ║
+  ║  {{#BLOCK}}...{{/BLOCK}} = conditional or loop block            ║
+  ║                                                                 ║
+  ║  Render this template server-side, then pass to Puppeteer:      ║
+  ║  await page.pdf({                                               ║
+  ║    format: 'A4',                                                ║
+  ║    printBackground: true,   // REQUIRED                         ║
+  ║    margin: { top:0, bottom:0, left:0, right:0 },                ║
+  ║    preferCSSPageSize: true,                                     ║
+  ║  })                                                             ║
+  ║                                                                 ║
+  ║  See schema.json for full data model.                           ║
+  ║  See README.md for implementation guide.                        ║
+  ╚══════════════════════════════════════════════════════════════════╝
+-->
 <html lang="en">
 <head>
+
 <meta charset="UTF-8">
+<title>{{META.repo_name_display}} — Owner's Manual · CodeReceipt</title>
+
+<!--
+  FONTS
+  Self-host these for headless rendering. Replace with @font-face
+  declarations pointing to locally served font files.
+-->
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:ital,wght@0,400;0,700;1,400&family=Space+Grotesk:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+
 <style>
-  @page { size: A4; margin: 0; }
-  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+/* ════════════════════════════════════════════════════
+   DESIGN TOKENS — do not change these values
+   ════════════════════════════════════════════════════ */
+:root {
+  --black:  #0A0A0A;
+  --cream:  #F2EDE3;
+  --yellow: #E8FF00;
+  --red:    #FF2B2B;
+  --ink:    #1A1A18;
+  --mono: 'Space Mono', monospace;
+  --sans: 'Space Grotesk', sans-serif;
 
-  body {
-    font-family: 'Courier New', Courier, monospace;
-    background: #fff;
-    color: #0A0A0A;
-    -webkit-print-color-adjust: exact;
-    print-color-adjust: exact;
-  }
+  /* A4 portrait at 96dpi — do not change */
+  --page-w: 794px;
+  --page-h: 1123px;
+}
 
-  .page {
-    width: 210mm;
-    min-height: 297mm;
-    page-break-after: always;
-    padding: 18mm 16mm;
-    position: relative;
-    overflow: hidden;
-  }
-  .page:last-child { page-break-after: auto; }
+/* ════════════════════════════════════════════════════
+   RESET & BASE
+   ════════════════════════════════════════════════════ */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-  /* ── COVER ─────────────────────────────────────────────── */
-  .page-cover {
-    background: #0A0A0A;
-    color: #F2EDE3;
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
-    padding: 20mm 18mm;
-  }
+body {
+  background: var(--cream);
+  font-family: var(--sans);
+  color: var(--ink);
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
+}
 
-  .cover-label {
-    font-size: 9px;
-    letter-spacing: 0.25em;
-    text-transform: uppercase;
-    opacity: 0.35;
-    margin-bottom: 12px;
-  }
-  .cover-badge {
-    display: inline-block;
-    background: #E8FF00;
-    color: #0A0A0A;
-    font-size: 11px;
-    font-weight: 700;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-    padding: 6px 14px;
-  }
-  .cover-title {
-    font-family: Arial, Helvetica, sans-serif;
-    font-size: 80px;
-    font-weight: 900;
-    line-height: 0.88;
-    letter-spacing: -0.04em;
-    text-transform: uppercase;
-    margin: 28px 0 24px;
-  }
-  .cover-title-accent { color: #E8FF00; display: block; }
-  .cover-repo-label {
-    font-size: 9px;
-    letter-spacing: 0.2em;
-    text-transform: uppercase;
-    opacity: 0.4;
-    margin-bottom: 6px;
-  }
-  .cover-repo-name {
-    font-size: 24px;
-    font-weight: 700;
-    color: #E8FF00;
-    margin-bottom: 6px;
-    letter-spacing: -0.01em;
-  }
-  .cover-stack {
-    font-size: 10px;
-    opacity: 0.35;
-    letter-spacing: 0.12em;
-    text-transform: uppercase;
-  }
-  .cover-footer {
-    border-top: 1px solid rgba(255,255,255,0.12);
-    padding-top: 16px;
-    display: flex;
-    justify-content: space-between;
-    font-size: 9px;
-    opacity: 0.35;
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
-  }
+/* ════════════════════════════════════════════════════
+   PAGE CONTAINER
+   Each .page is one A4 page. break-after forces a new
+   page in Puppeteer / print.
+   ════════════════════════════════════════════════════ */
+.page {
+  width: var(--page-w);
+  height: var(--page-h);
+  overflow: hidden;
+  break-after: page;
+  break-inside: avoid;
+  position: relative;
+  background: var(--cream);
+}
 
-  /* ── PAGE CHROME ────────────────────────────────────────── */
-  .page-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    border-bottom: 2px solid #0A0A0A;
-    padding-bottom: 10px;
-    margin-bottom: 28px;
-  }
-  .page-header .section-label {
-    font-size: 9px;
-    letter-spacing: 0.18em;
-    text-transform: uppercase;
-    opacity: 0.4;
-  }
-  .page-header .cr-mark {
-    font-size: 9px;
-    font-weight: 700;
-    letter-spacing: 0.05em;
-    background: #E8FF00;
-    padding: 2px 7px;
-    color: #0A0A0A;
-  }
-  .page-header .page-num {
-    font-size: 9px;
-    letter-spacing: 0.1em;
-    opacity: 0.3;
-  }
+/* ════════════════════════════════════════════════════
+   PAGE 1 — COVER
+   ════════════════════════════════════════════════════ */
+.cover {
+  background: var(--black);
+  display: flex;
+  flex-direction: column;
+  height: var(--page-h);
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
+}
 
-  /* ── HEADINGS ───────────────────────────────────────────── */
-  h2 {
-    font-family: Arial, Helvetica, sans-serif;
-    font-size: 30px;
-    font-weight: 900;
-    letter-spacing: -0.03em;
-    text-transform: uppercase;
-    line-height: 1;
-    margin-bottom: 20px;
-  }
-  h4 {
-    font-size: 9px;
-    letter-spacing: 0.2em;
-    text-transform: uppercase;
-    opacity: 0.4;
-    margin: 20px 0 10px;
-  }
-  p { font-size: 11px; line-height: 1.7; opacity: 0.72; }
+/* Top yellow stripe */
+.cover-stripe {
+  height: 10px;
+  background: var(--yellow);
+  flex-shrink: 0;
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
+}
 
-  /* ── ARCHITECTURE ───────────────────────────────────────── */
-  .arch-summary {
-    font-size: 12px;
-    line-height: 1.75;
-    opacity: 0.8;
-    margin-bottom: 22px;
-    max-width: 530px;
-  }
+/* Left yellow border on main body */
+.cover-body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  padding: 64px 64px 0;
+  border-left: 8px solid var(--yellow);
+}
 
-  .stack-badges {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 6px;
-    margin-bottom: 22px;
-  }
-  .badge {
-    font-size: 9px;
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
-    padding: 3px 9px;
-    border: 1.5px solid #0A0A0A;
-    display: inline-block;
-  }
-  .badge-highlight { background: #E8FF00; }
+.cover-eyebrow {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.35);
+  margin-bottom: 48px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+.cover-eyebrow::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: rgba(255,255,255,0.1);
+}
 
-  .file-tree {
-    font-size: 10px;
-    line-height: 1.9;
-    background: #F8F8F6;
-    padding: 14px 18px;
-    border: 1.5px solid #0A0A0A;
-  }
-  .tree-dir { opacity: 0.45; }
-  .tree-badge {
-    font-size: 7px;
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
-    padding: 1px 5px;
-    margin-left: 7px;
-    vertical-align: middle;
-  }
-  .tree-badge-green  { background: #d1fae5; color: #065f46; }
-  .tree-badge-red    { background: #fee2e2; color: #991b1b; }
-  .tree-badge-yellow { background: #E8FF00; color: #0A0A0A; }
+.cover-manual-label {
+  font-family: var(--mono);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.25em;
+  text-transform: uppercase;
+  color: var(--yellow);
+  margin-bottom: 20px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.cover-manual-label::before { content: '▶'; font-size: 8px; }
 
-  /* ── FILE CARDS ─────────────────────────────────────────── */
-  .file-card {
-    border: 1.5px solid #0A0A0A;
-    padding: 13px 15px;
-    margin-bottom: 12px;
-    page-break-inside: avoid;
-  }
-  .file-card-path  { font-size: 9px; opacity: 0.35; margin-bottom: 2px; }
-  .file-card-name  { font-size: 13px; font-weight: 700; margin-bottom: 6px; }
-  .file-card-tag   {
-    font-size: 8px;
-    letter-spacing: 0.12em;
-    text-transform: uppercase;
-    background: #E8FF00;
-    padding: 2px 6px;
-    display: inline-block;
-    margin-bottom: 8px;
-    color: #0A0A0A;
-  }
-  .file-card-desc  { font-size: 10px; line-height: 1.65; opacity: 0.68; margin-bottom: 9px; }
-  .file-meta-row   {
-    display: flex;
-    gap: 16px;
-    border-top: 1px solid rgba(0,0,0,0.07);
-    padding-top: 8px;
-  }
-  .file-meta-item  { flex: 1; }
-  .file-meta-label {
-    font-size: 7px;
-    letter-spacing: 0.15em;
-    text-transform: uppercase;
-    opacity: 0.38;
-    display: block;
-    margin-bottom: 2px;
-  }
-  .file-meta-val   { font-size: 9px; opacity: 0.62; line-height: 1.4; }
+/* Main title — split rendering:
+   .cover-title-main = white portion
+   .cover-title-accent = --yellow portion (last word of repo name) */
+.cover-title {
+  font-size: 96px;
+  font-weight: 800;
+  letter-spacing: -0.04em;
+  line-height: 0.88;
+  text-transform: uppercase;
+  margin-bottom: 8px;
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
+}
+.cover-title-main   { color: #fff; }
+.cover-title-accent { color: var(--yellow); }
 
-  /* ── MAINTENANCE ────────────────────────────────────────── */
-  .maintenance-intro {
-    font-size: 12px;
-    line-height: 1.75;
-    opacity: 0.8;
-    margin-bottom: 20px;
-  }
-  .code-block {
-    background: #F8F8F6;
-    border: 1.5px solid #0A0A0A;
-    padding: 12px 16px;
-    font-size: 10px;
-    line-height: 1.75;
-    margin-bottom: 20px;
-  }
-  .code-label {
-    font-size: 8px;
-    letter-spacing: 0.12em;
-    text-transform: uppercase;
-    opacity: 0.38;
-    margin-bottom: 7px;
-  }
-  .service-table {
-    width: 100%;
-    border-collapse: collapse;
-    font-size: 10px;
-    margin-bottom: 20px;
-  }
-  .service-table th {
-    font-size: 8px;
-    letter-spacing: 0.15em;
-    text-transform: uppercase;
-    opacity: 0.38;
-    text-align: left;
-    padding: 7px 10px;
-    border-bottom: 1.5px solid #0A0A0A;
-  }
-  .service-table td {
-    padding: 8px 10px;
-    border-bottom: 1px solid rgba(0,0,0,0.08);
-    opacity: 0.72;
-    vertical-align: top;
-  }
-  .priority-high { color: #dc2626; font-weight: 700; }
-  .priority-med  { color: #d97706; }
+.cover-subtitle {
+  font-size: 28px;
+  font-weight: 300;
+  color: rgba(255,255,255,0.45);
+  letter-spacing: -0.02em;
+  text-transform: uppercase;
+  margin-top: 16px;
+  margin-bottom: 64px;
+}
 
-  .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+/* 6-cell metadata grid */
+.cover-meta-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  border: 1px solid rgba(255,255,255,0.12);
+  margin-bottom: 48px;
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
+}
+.cover-meta-cell {
+  padding: 18px 20px;
+  border-right: 1px solid rgba(255,255,255,0.12);
+}
+.cover-meta-cell:nth-child(3n) { border-right: none; }
+.cmc-label {
+  font-family: var(--mono);
+  font-size: 9px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.3);
+  margin-bottom: 6px;
+  display: block;
+}
+.cmc-value         { font-family: var(--mono); font-size: 13px; color: #fff; font-weight: 700; }
+.cmc-value.yellow  { color: var(--yellow); }
 
-  .dont-touch-item {
-    border-left: 3px solid #FF2B2B;
-    padding: 7px 11px;
-    margin-bottom: 7px;
-    background: #fff5f5;
-  }
-  .dont-touch-name   { font-size: 11px; font-weight: 700; margin-bottom: 2px; }
-  .dont-touch-reason { font-size: 10px; opacity: 0.6; }
+/* Red warning notice */
+.cover-warning {
+  background: var(--red);
+  padding: 14px 20px;
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
+}
+.cover-warning-icon {
+  font-family: var(--mono);
+  font-size: 11px;
+  font-weight: 700;
+  color: #fff;
+  white-space: nowrap;
+  letter-spacing: 0.1em;
+}
+.cover-warning p {
+  font-family: var(--mono);
+  font-size: 10px;
+  color: rgba(255,255,255,0.85);
+  line-height: 1.6;
+  letter-spacing: 0.03em;
+}
 
-  .safe-list  { display: flex; flex-wrap: wrap; gap: 6px; }
-  .safe-item  {
-    font-size: 9px;
-    padding: 3px 9px;
-    border: 1.5px solid #0A0A0A;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-  }
+.cover-footer {
+  height: 80px;
+  border-top: 1px solid rgba(255,255,255,0.08);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 64px;
+  flex-shrink: 0;
+}
+.cover-footer-brand {
+  font-family: var(--mono);
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  color: rgba(255,255,255,0.2);
+}
+.cover-footer-brand strong { color: var(--yellow); }
+.cover-footer-page {
+  font-family: var(--mono);
+  font-size: 10px;
+  color: rgba(255,255,255,0.2);
+  letter-spacing: 0.2em;
+}
 
-  /* ── GLOSSARY ───────────────────────────────────────────── */
-  .glossary-item {
-    display: flex;
-    gap: 20px;
-    border-bottom: 1px solid rgba(0,0,0,0.08);
-    padding: 14px 0;
-    page-break-inside: avoid;
-  }
-  .glossary-left  { min-width: 110px; flex-shrink: 0; }
-  .glossary-term  { font-size: 13px; font-weight: 700; margin-bottom: 4px; }
-  .glossary-tag   {
-    font-size: 8px;
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
-    background: #E8FF00;
-    padding: 2px 6px;
-    display: inline-block;
-    color: #0A0A0A;
-  }
-  .glossary-def   { font-size: 11px; line-height: 1.65; opacity: 0.68; flex: 1; padding-top: 2px; }
+/* ════════════════════════════════════════════════════
+   INNER PAGE CHROME (Pages 2–6)
+   ════════════════════════════════════════════════════ */
+.inner-page {
+  display: flex;
+  flex-direction: column;
+  height: var(--page-h);
+}
+
+/* Top bar */
+.page-header {
+  height: 48px;
+  background: var(--black);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 40px;
+  flex-shrink: 0;
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
+}
+.ph-left    { font-family: var(--mono); font-size: 9px; letter-spacing: 0.2em; text-transform: uppercase; color: rgba(255,255,255,0.35); }
+.ph-chapter { font-family: var(--mono); font-size: 9px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--yellow); }
+.ph-right   { font-family: var(--mono); font-size: 9px; color: rgba(255,255,255,0.2); letter-spacing: 0.15em; }
+
+/* Content area */
+.page-content { flex: 1; padding: 48px 40px 0; overflow: hidden; }
+
+/* Bottom bar */
+.page-footer {
+  height: 40px;
+  border-top: 2px solid var(--black);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 40px;
+  flex-shrink: 0;
+}
+.pf-left { font-family: var(--mono); font-size: 9px; letter-spacing: 0.12em; text-transform: uppercase; color: rgba(0,0,0,0.3); }
+.pf-num  { font-family: var(--mono); font-size: 11px; font-weight: 700; color: var(--black); }
+
+/* ════════════════════════════════════════════════════
+   CHAPTER OPENER
+   Large chapter number (black block, yellow text) + title
+   ════════════════════════════════════════════════════ */
+.chapter-opener {
+  display: flex;
+  align-items: flex-start;
+  gap: 0;
+  margin-bottom: 40px;
+  border-bottom: 3px solid var(--black);
+  padding-bottom: 32px;
+}
+.chapter-num-block {
+  background: var(--black);
+  color: var(--yellow);
+  font-family: var(--mono);
+  font-size: 56px;
+  font-weight: 700;
+  line-height: 1;
+  padding: 16px 24px;
+  letter-spacing: -0.04em;
+  flex-shrink: 0;
+  margin-right: 24px;
+  align-self: flex-start;
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
+}
+.chapter-label {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  opacity: 0.4;
+  margin-bottom: 8px;
+}
+.chapter-title {
+  font-size: 44px;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  text-transform: uppercase;
+  line-height: 1;
+  margin-bottom: 12px;
+}
+.chapter-desc {
+  font-size: 14px;
+  line-height: 1.65;
+  opacity: 0.6;
+  max-width: 480px;
+}
+
+/* ════════════════════════════════════════════════════
+   TYPOGRAPHY UTILITIES
+   ════════════════════════════════════════════════════ */
+.section-label {
+  font-family: var(--mono);
+  font-size: 9px;
+  letter-spacing: 0.25em;
+  text-transform: uppercase;
+  opacity: 0.4;
+  margin-bottom: 8px;
+  display: block;
+}
+.doc-p {
+  font-size: 13.5px;
+  line-height: 1.7;
+  opacity: 0.75;
+  margin-bottom: 16px;
+  max-width: 640px;
+}
+code {
+  font-family: var(--mono);
+  font-size: 11px;
+  background: rgba(0,0,0,0.07);
+  padding: 1px 5px;
+  letter-spacing: 0.02em;
+}
+
+/* ════════════════════════════════════════════════════
+   TABLE OF CONTENTS
+   ════════════════════════════════════════════════════ */
+.toc-list  { list-style: none; border-top: 2px solid var(--black); }
+.toc-item  {
+  display: flex;
+  align-items: baseline;
+  border-bottom: 1px solid rgba(0,0,0,0.1);
+  padding: 14px 0;
+}
+.toc-item.chapter {
+  border-bottom: 2px solid var(--black);
+}
+.toc-num   { font-family: var(--mono); font-size: 10px; color: rgba(0,0,0,0.35); width: 40px; flex-shrink: 0; letter-spacing: 0.1em; }
+.toc-title { flex: 1; font-size: 14px; font-weight: 500; letter-spacing: -0.01em; }
+.toc-item.chapter .toc-title { font-size: 16px; font-weight: 800; text-transform: uppercase; letter-spacing: -0.02em; }
+.toc-dots  { flex: 1; border-bottom: 1px dotted rgba(0,0,0,0.2); margin: 0 12px; margin-bottom: 3px; }
+.toc-page  { font-family: var(--mono); font-size: 11px; font-weight: 700; }
+.toc-item.chapter .toc-page {
+  background: var(--black);
+  color: var(--yellow);
+  padding: 2px 8px;
+  font-size: 10px;
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
+}
+.toc-sub   { padding-left: 40px; }
+
+/* ════════════════════════════════════════════════════
+   STACK BADGES
+   ════════════════════════════════════════════════════ */
+.stack-row  { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 28px; }
+.stack-badge {
+  font-family: var(--mono);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  border: 2px solid var(--black);
+  padding: 6px 12px;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+.stack-badge .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--black); flex-shrink: 0; }
+/* Add class .hl for highlighted (primary stack) badges */
+.stack-badge.hl {
+  background: var(--yellow);
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
+}
+
+/* ════════════════════════════════════════════════════
+   FILE TREE PANEL
+   ════════════════════════════════════════════════════ */
+.file-tree {
+  background: var(--black);
+  padding: 24px 28px;
+  margin-bottom: 32px;
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
+}
+.ft-header {
+  font-family: var(--mono);
+  font-size: 10px;
+  color: rgba(255,255,255,0.3);
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  margin-bottom: 16px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.ft-header::after { content: ''; flex: 1; height: 1px; background: rgba(255,255,255,0.08); }
+.ft-line { font-family: var(--mono); font-size: 11px; color: rgba(255,255,255,0.5); line-height: 1.9; }
+.ft-line .dir  { color: rgba(255,255,255,0.8); font-weight: 700; }
+.ft-line .file { color: rgba(255,255,255,0.55); }
+.ft-line .badge         { display: inline-block; background: rgba(232,255,0,0.12); color: var(--yellow); font-size: 9px; padding: 1px 6px; margin-left: 8px; letter-spacing: 0.08em; vertical-align: middle; }
+.ft-line .badge.red     { background: rgba(255,43,43,0.15); color: #FF6B6B; }
+.ft-line .badge.green   { background: rgba(0,255,127,0.1); color: #00FF7F; }
+
+/* ════════════════════════════════════════════════════
+   ARCHITECTURE DIAGRAM
+   3-column layout: Layer | Arrow | Layer | Arrow | Layer
+   ════════════════════════════════════════════════════ */
+.arch-diagram {
+  border: 2px solid var(--black);
+  margin-bottom: 32px;
+  display: grid;
+  grid-template-columns: 1fr 24px 1fr 24px 1fr;
+  align-items: stretch;
+}
+.arch-layer { padding: 20px 18px; border-right: 2px solid var(--black); }
+.arch-layer:last-child { border-right: none; }
+.arch-layer.arrow {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0,0,0,0.04);
+  font-size: 16px;
+  padding: 0;
+  border-right: none;
+}
+.arch-layer-label { font-family: var(--mono); font-size: 9px; letter-spacing: 0.2em; text-transform: uppercase; opacity: 0.4; margin-bottom: 10px; }
+.arch-layer-name  { font-size: 15px; font-weight: 800; text-transform: uppercase; letter-spacing: -0.02em; margin-bottom: 8px; }
+.arch-layer-items { list-style: none; }
+.arch-layer-items li { font-family: var(--mono); font-size: 10px; color: rgba(0,0,0,0.55); line-height: 1.9; padding-left: 12px; position: relative; }
+.arch-layer-items li::before { content: '—'; position: absolute; left: 0; opacity: 0.3; }
+
+/* ════════════════════════════════════════════════════
+   FILE CARDS (Chapter 2)
+   ════════════════════════════════════════════════════ */
+.file-card       { border: 2px solid var(--black); margin-bottom: 20px; }
+.fc-header {
+  background: var(--black);
+  padding: 12px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
+}
+.fc-path          { font-family: var(--mono); font-size: 11px; color: rgba(255,255,255,0.7); letter-spacing: 0.03em; }
+.fc-path .dir-part { color: rgba(255,255,255,0.35); }
+.fc-tags          { display: flex; gap: 6px; }
+.fc-tag           { font-family: var(--mono); font-size: 9px; letter-spacing: 0.1em; text-transform: uppercase; padding: 3px 8px; border: 1px solid rgba(255,255,255,0.15); color: rgba(255,255,255,0.45); }
+.fc-tag.yellow    { border-color: rgba(232,255,0,0.4); color: var(--yellow); }
+.fc-body          { padding: 20px; }
+.fc-what          { font-size: 13.5px; line-height: 1.7; opacity: 0.75; margin-bottom: 14px; }
+
+/* 2×2 metadata grid */
+.fc-grid      { display: grid; grid-template-columns: 1fr 1fr; gap: 0; border: 1px solid rgba(0,0,0,0.12); }
+.fc-grid-cell { padding: 10px 14px; border-right: 1px solid rgba(0,0,0,0.12); border-bottom: 1px solid rgba(0,0,0,0.12); }
+.fc-grid-cell:nth-child(2n)         { border-right: none; }
+.fc-grid-cell:nth-last-child(-n+2)  { border-bottom: none; }
+.fcg-label    { font-family: var(--mono); font-size: 9px; letter-spacing: 0.15em; text-transform: uppercase; opacity: 0.35; margin-bottom: 4px; display: block; }
+.fcg-value    { font-family: var(--mono); font-size: 11px; font-weight: 700; line-height: 1.5; }
+
+/* ════════════════════════════════════════════════════
+   CODE BLOCK
+   Syntax colouring classes:
+   .kw = keyword (--yellow)
+   .fn = function name (#7DFFB3)
+   .str = string (#FF9F7E)
+   .cm = comment (dimmed italic)
+   .ln = line number (dimmed)
+   ════════════════════════════════════════════════════ */
+.code-block {
+  background: var(--black);
+  padding: 20px 24px;
+  margin: 16px 0 20px;
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
+}
+.code-block-label { font-family: var(--mono); font-size: 9px; letter-spacing: 0.15em; text-transform: uppercase; color: rgba(255,255,255,0.25); margin-bottom: 12px; display: block; }
+.code-block pre   { font-family: var(--mono); font-size: 11px; color: rgba(255,255,255,0.7); line-height: 1.8; white-space: pre; }
+.code-block .kw   { color: var(--yellow); }
+.code-block .fn   { color: #7DFFB3; }
+.code-block .str  { color: #FF9F7E; }
+.code-block .cm   { color: rgba(255,255,255,0.25); font-style: italic; }
+.code-block .ln   { display: inline-block; width: 28px; color: rgba(255,255,255,0.2); text-align: right; margin-right: 16px; font-size: 10px; }
+
+/* ════════════════════════════════════════════════════
+   CALLOUT BOXES
+   .callout        = neutral (black left border)
+   .callout.warn   = warning (--red left border, pink bg)
+   .callout.tip    = tip (--yellow left border, pale yellow bg)
+   ════════════════════════════════════════════════════ */
+.callout          { border-left: 4px solid var(--black); padding: 14px 18px; margin: 16px 0; background: rgba(0,0,0,0.04); -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+.callout.warn     { border-left-color: var(--red);    background: rgba(255,43,43,0.06); }
+.callout.tip      { border-left-color: var(--yellow); background: rgba(232,255,0,0.06); }
+.callout-label    { font-family: var(--mono); font-size: 9px; font-weight: 700; letter-spacing: 0.2em; text-transform: uppercase; margin-bottom: 6px; display: block; }
+.callout.warn .callout-label { color: var(--red); }
+.callout.tip  .callout-label { color: #8A9900; }
+.callout p        { font-size: 12.5px; line-height: 1.65; opacity: 0.75; }
+
+/* ════════════════════════════════════════════════════
+   MAINTENANCE TABLE (Chapter 3)
+   ════════════════════════════════════════════════════ */
+.maint-table { width: 100%; border-collapse: collapse; border: 2px solid var(--black); margin-bottom: 24px; }
+.maint-table th {
+  background: var(--black);
+  color: var(--yellow);
+  font-family: var(--mono);
+  font-size: 9px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  padding: 10px 16px;
+  text-align: left;
+  border-right: 1px solid rgba(255,255,255,0.1);
+  font-weight: 700;
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
+}
+.maint-table td { padding: 12px 16px; font-size: 12.5px; border-bottom: 1px solid rgba(0,0,0,0.1); border-right: 1px solid rgba(0,0,0,0.08); vertical-align: top; line-height: 1.5; }
+.maint-table td:last-child  { border-right: none; }
+.maint-table tr:last-child td { border-bottom: none; }
+
+/* Severity badge — rendered from {{priority}} field */
+.severity      { font-family: var(--mono); font-size: 9px; font-weight: 700; letter-spacing: 0.1em; padding: 3px 8px; text-transform: uppercase; white-space: nowrap; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+.severity.high { background: var(--red);    color: #fff; }
+.severity.med  { background: var(--yellow); color: var(--black); }
+.severity.low  { border: 1px solid rgba(0,0,0,0.2); color: rgba(0,0,0,0.5); }
+
+/* ════════════════════════════════════════════════════
+   GLOSSARY (Chapter 4)
+   ════════════════════════════════════════════════════ */
+.glossary-item          { display: grid; grid-template-columns: 200px 1fr; border-bottom: 1px solid rgba(0,0,0,0.1); padding: 16px 0; gap: 24px; }
+.glossary-item:first-child { border-top: 2px solid var(--black); }
+.gl-term                { font-family: var(--mono); font-size: 12px; font-weight: 700; letter-spacing: 0.05em; line-height: 1.4; align-self: start; padding-top: 2px; }
+.gl-term .gl-tag        { display: block; font-size: 9px; letter-spacing: 0.15em; text-transform: uppercase; opacity: 0.4; font-weight: 400; margin-top: 3px; }
+.gl-def                 { font-size: 13px; line-height: 1.7; opacity: 0.7; }
+.gl-def strong          { font-weight: 600; opacity: 1; color: var(--ink); }
+
+/* ════════════════════════════════════════════════════
+   LAYOUT UTILITIES
+   ════════════════════════════════════════════════════ */
+.two-col      { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+.two-col-wide { display: grid; grid-template-columns: 2fr 1fr; gap: 24px; }
+.divider      { border: none; border-top: 2px solid var(--black); margin: 28px 0; }
+.divider.light{ border-top: 1px solid rgba(0,0,0,0.12); margin: 20px 0; }
+
+/* ════════════════════════════════════════════════════
+   PRINT OVERRIDES
+   ════════════════════════════════════════════════════ */
+@media print {
+  @page { size: A4 portrait; margin: 0; }
+  body  { background: var(--cream); }
+  .page { width: 100%; height: 100vh; break-after: page; }
+}
 </style>
 </head>
 <body>
 
-<!-- ═══════════════════════════════════════════════════════
-     COVER
-════════════════════════════════════════════════════════ -->
-<div class="page page-cover">
-  {{#META}}
-  <div>
-    <div class="cover-label">Owner's Manual — CodeReceipt</div>
-    <div class="cover-badge">Technical Reference</div>
-  </div>
-  <div>
+<!-- ══════════════════════════════════════════════════
+     PAGE 1 — COVER
+     Data fields: META.*
+     ══════════════════════════════════════════════════ -->
+<div class="page cover" id="page-cover">
+  <div class="cover-stripe"></div>
+  <div class="cover-body">
+    <div class="cover-eyebrow">CodeReceipt · Owner's Manual</div>
+    <div class="cover-manual-label">Generated Owner's Manual</div>
+
+    <!--
+      TEMPLATE NOTE:
+      Split {{META.repo_name_display}} into two spans:
+        - .cover-title-main    = everything before the last word
+        - .cover-title-accent  = last word (or {{META.repo_name_accent}})
+      Example: "Task" + "Flow" for "TaskFlow"
+    -->
     <div class="cover-title">
-      <span class="cover-title-accent">Code</span>Receipt
+      <span class="cover-title-main">{{META.repo_name_main}}</span><span class="cover-title-accent">{{META.repo_name_accent}}</span>
     </div>
-    <div class="cover-repo-label">Generated manual for</div>
-    <div class="cover-repo-name">{{repo_name}}</div>
-    <div class="cover-stack">{{stack_summary}}</div>
+    <div class="cover-subtitle">{{META.app_type}}</div>
+
+    <div class="cover-meta-grid">
+      <div class="cover-meta-cell">
+        <span class="cmc-label">Repository</span>
+        <span class="cmc-value">{{META.repo_url}}</span>
+      </div>
+      <div class="cover-meta-cell">
+        <span class="cmc-label">Branch</span>
+        <span class="cmc-value yellow">{{META.branch}}</span>
+      </div>
+      <div class="cover-meta-cell">
+        <span class="cmc-label">Generated</span>
+        <span class="cmc-value">{{META.generated_at_display}}</span>
+      </div>
+      <div class="cover-meta-cell">
+        <span class="cmc-label">Stack</span>
+        <span class="cmc-value">{{META.stack_summary}}</span>
+      </div>
+      <div class="cover-meta-cell">
+        <span class="cmc-label">Files Analysed</span>
+        <span class="cmc-value yellow">{{META.file_count}} files</span>
+      </div>
+      <div class="cover-meta-cell">
+        <span class="cmc-label">Manual Version</span>
+        <span class="cmc-value">{{META.version}}</span>
+      </div>
+    </div>
+
+    <div class="cover-warning">
+      <span class="cover-warning-icon">! NOTICE</span>
+      <p>This manual was auto-generated by CodeReceipt. It describes the current state of your codebase in plain English. It is not a substitute for reading your code — it is a map. Use it to navigate, not to replace understanding.</p>
+    </div>
   </div>
   <div class="cover-footer">
-    <span>v{{version}}</span>
-    <span>{{generated_at_display}}</span>
-    <span>{{total_pages}} pages</span>
+    <div class="cover-footer-brand">Powered by <strong>CodeReceipt</strong></div>
+    <div class="cover-footer-page">Page 01 of {{META.total_pages}}</div>
   </div>
-  {{/META}}
 </div>
 
-<!-- ═══════════════════════════════════════════════════════
-     ARCHITECTURE
-════════════════════════════════════════════════════════ -->
-<div class="page page-arch">
-  <div class="page-header">
-    <span class="section-label">01 / Architecture Overview</span>
-    <span class="cr-mark">CR</span>
-    <span class="page-num">03</span>
+
+<!-- ══════════════════════════════════════════════════
+     PAGE 2 — TABLE OF CONTENTS
+     Data fields: TOC[] array
+     ══════════════════════════════════════════════════ -->
+<div class="page" id="page-toc">
+  <div class="inner-page">
+    <div class="page-header">
+      <span class="ph-left">{{META.repo_name_display}} — Owner's Manual</span>
+      <span class="ph-chapter">Contents</span>
+      <span class="ph-right">CodeReceipt</span>
+    </div>
+    <div class="page-content">
+      <div class="chapter-opener">
+        <div class="chapter-num-block">TOC</div>
+        <div class="chapter-title-block">
+          <div class="chapter-label">// Index</div>
+          <h1 class="chapter-title">Table of Contents</h1>
+          <p class="chapter-desc">This manual covers your entire codebase in plain English — what was built, how it works, and how to keep it running.</p>
+        </div>
+      </div>
+
+      <!--
+        TEMPLATE LOOP: {{#TOC}}
+        For each entry, render either .toc-item.chapter or .toc-item.toc-sub
+        based on entry.level === 'chapter' | 'section'
+      -->
+      <ul class="toc-list">
+        {{#TOC}}
+        <li class="toc-item {{#isChapter}}chapter{{/isChapter}} {{#isSection}}toc-sub{{/isSection}}">
+          <span class="toc-num">{{num}}</span>
+          <span class="toc-title">{{title}}</span>
+          <span class="toc-dots"></span>
+          <span class="toc-page">{{page}}</span>
+        </li>
+        {{/TOC}}
+      </ul>
+    </div>
+    <div class="page-footer">
+      <span class="pf-left">{{META.repo_name_display}} — Owner's Manual · CodeReceipt</span>
+      <span class="pf-num">02</span>
+    </div>
   </div>
-
-  <h2>Architecture</h2>
-
-  {{#ARCHITECTURE}}
-  <p class="arch-summary">{{{plain_english_summary}}}</p>
-
-  <h4>Stack</h4>
-  <div class="stack-badges">
-    {{#stack_badges}}
-    <span class="badge {{#highlight}}badge-highlight{{/highlight}}">{{name}}</span>
-    {{/stack_badges}}
-  </div>
-
-  <h4>File Map</h4>
-  <div class="file-tree">
-    {{#file_tree}}
-    <div style="padding-left: {{indent}}em;" class="tree-{{type}}">{{name}}{{#badge}}<span class="tree-badge tree-badge-{{colour}}">{{label}}</span>{{/badge}}</div>
-    {{/file_tree}}
-  </div>
-  {{/ARCHITECTURE}}
 </div>
 
-<!-- ═══════════════════════════════════════════════════════
-     FILE PAGES  (builder.py renders this block once per page)
-════════════════════════════════════════════════════════ -->
+
+<!-- ══════════════════════════════════════════════════
+     PAGE 3 — ARCHITECTURE OVERVIEW
+     Data fields: ARCHITECTURE.*
+     ══════════════════════════════════════════════════ -->
+<div class="page" id="page-architecture">
+  <div class="inner-page">
+    <div class="page-header">
+      <span class="ph-left">{{META.repo_name_display}} — Owner's Manual</span>
+      <span class="ph-chapter">Chapter 01 — Architecture</span>
+      <span class="ph-right">CodeReceipt</span>
+    </div>
+    <div class="page-content">
+      <div class="chapter-opener">
+        <div class="chapter-num-block">01</div>
+        <div class="chapter-title-block">
+          <div class="chapter-label">// Chapter One</div>
+          <h1 class="chapter-title">Architecture Overview</h1>
+          <p class="chapter-desc">What you built, what it runs on, and how the pieces connect. Read this before touching anything.</p>
+        </div>
+      </div>
+
+      <!-- 1.1 Stack Badges -->
+      <span class="section-label">1.1 / Stack Summary</span>
+      <div class="stack-row">
+        <!--
+          TEMPLATE LOOP: {{#ARCHITECTURE.stack_badges}}
+          Add class .hl when highlight === true
+        -->
+        {{#ARCHITECTURE.stack_badges}}
+        <div class="stack-badge {{#highlight}}hl{{/highlight}}">
+          <span class="dot"></span>{{name}}
+        </div>
+        {{/ARCHITECTURE.stack_badges}}
+      </div>
+
+      <div class="two-col-wide">
+        <!-- 1.2 File Tree -->
+        <div>
+          <span class="section-label">1.2 / File Tree</span>
+          <div class="file-tree">
+            <div class="ft-header">{{META.repo_name}}/</div>
+            <!--
+              TEMPLATE LOOP: {{#ARCHITECTURE.file_tree}}
+              Render indent as &nbsp;&nbsp; repeated indent times
+              type === 'dir' → use .dir span
+              type === 'file' → use .file span
+              badge present → append .badge span with badge.colour class
+            -->
+            {{#ARCHITECTURE.file_tree}}
+            <div class="ft-line">
+              {{indent_spaces}}<span class="{{type}}">{{name}}</span>
+              {{#badge}}<span class="badge {{colour}}">{{label}}</span>{{/badge}}
+            </div>
+            {{/ARCHITECTURE.file_tree}}
+          </div>
+        </div>
+
+        <!-- 1.3 Architecture Diagram -->
+        <div>
+          <span class="section-label">1.3 / How It Connects</span>
+          <p class="doc-p" style="font-size:12.5px">Your app has three distinct layers that talk to each other in one direction: the browser asks, the server decides, the database stores.</p>
+          <div class="arch-diagram">
+            <!--
+              TEMPLATE LOOP: {{#ARCHITECTURE.layers}}
+              Interleave with arrow divs between layers (not after last)
+            -->
+            {{#ARCHITECTURE.layers}}
+            <div class="arch-layer">
+              <div class="arch-layer-label">{{label}}</div>
+              <div class="arch-layer-name">{{name}}</div>
+              <ul class="arch-layer-items">
+                {{#items}}<li>{{.}}</li>{{/items}}
+              </ul>
+            </div>
+            {{^isLast}}<div class="arch-layer arrow">→</div>{{/isLast}}
+            {{/ARCHITECTURE.layers}}
+          </div>
+          <div class="callout tip">
+            <span class="callout-label">// Plain English</span>
+            <p>{{ARCHITECTURE.plain_english_summary}}</p>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="page-footer">
+      <span class="pf-left">{{META.repo_name_display}} — Owner's Manual · CodeReceipt</span>
+      <span class="pf-num">03</span>
+    </div>
+  </div>
+</div>
+
+
+<!-- ══════════════════════════════════════════════════
+     PAGE 4+ — FILE BREAKDOWNS (repeating)
+     Data fields: FILES[] array
+     NOTE: Render ~3 file cards per page. If FILES.length > 3,
+     emit additional .page wrappers with the same chrome.
+     Page number increments from 04 upward.
+     ══════════════════════════════════════════════════ -->
 <div class="page" id="page-files">
-  <div class="page-header">
-    <span class="section-label">02 / File Breakdowns</span>
-    <span class="cr-mark">CR</span>
-    <span class="page-num">{{FILE_PAGE_NUMBER}}</span>
-  </div>
-
-  <h2>Files</h2>
-
-  {{#FILES}}
-  <div class="file-card">
-    <div class="file-card-path">{{dir_part}}</div>
-    <div class="file-card-name">{{file_name}}</div>
-    {{#tags}}<span class="file-card-tag">{{label}}</span>{{/tags}}
-    <div class="file-card-desc">{{{description}}}</div>
-    {{#meta}}
-    <div class="file-meta-row">
-      <div class="file-meta-item">
-        <span class="file-meta-label">Used by</span>
-        <span class="file-meta-val">{{used_by}}</span>
-      </div>
-      <div class="file-meta-item">
-        <span class="file-meta-label">If broken</span>
-        <span class="file-meta-val">{{if_broken}}</span>
-      </div>
-      <div class="file-meta-item">
-        <span class="file-meta-label">Safe to edit</span>
-        <span class="file-meta-val">{{safe_to_edit}}</span>
-      </div>
+  <div class="inner-page">
+    <div class="page-header">
+      <span class="ph-left">{{META.repo_name_display}} — Owner's Manual</span>
+      <span class="ph-chapter">Chapter 02 — File Breakdowns</span>
+      <span class="ph-right">CodeReceipt</span>
     </div>
-    {{/meta}}
+    <div class="page-content">
+      <div class="chapter-opener">
+        <div class="chapter-num-block">02</div>
+        <div class="chapter-title-block">
+          <div class="chapter-label">// Chapter Two</div>
+          <h1 class="chapter-title">File Breakdowns</h1>
+          <p class="chapter-desc">Every key file in plain English — what it does, what calls it, and what breaks if you mess with it.</p>
+        </div>
+      </div>
+
+      <!--
+        TEMPLATE LOOP: {{#FILES}} (first 3 items on this page)
+        For each file, render one .file-card
+      -->
+      {{#FILES}}
+      <div class="file-card">
+        <div class="fc-header">
+          <span class="fc-path">
+            <span class="dir-part">{{dir_part}}</span>{{file_name}}
+          </span>
+          <div class="fc-tags">
+            {{#tags}}
+            <span class="fc-tag {{#highlight}}yellow{{/highlight}}">{{label}}</span>
+            {{/tags}}
+          </div>
+        </div>
+        <div class="fc-body">
+          <p class="fc-what">{{description}}</p>
+          <div class="fc-grid">
+            <div class="fc-grid-cell">
+              <span class="fcg-label">Used By</span>
+              <span class="fcg-value">{{meta.used_by}}</span>
+            </div>
+            <div class="fc-grid-cell">
+              <span class="fcg-label">Depends On</span>
+              <span class="fcg-value">{{meta.depends_on}}</span>
+            </div>
+            <div class="fc-grid-cell">
+              <span class="fcg-label">If You Break It</span>
+              <span class="fcg-value">{{meta.if_broken}}</span>
+            </div>
+            <div class="fc-grid-cell">
+              <span class="fcg-label">Safe to Edit</span>
+              <span class="fcg-value">{{meta.safe_to_edit}}</span>
+            </div>
+          </div>
+
+          <!--
+            CONDITIONAL: {{#code_snippet}} — only render if present
+          -->
+          {{#code_snippet}}
+          <div class="code-block">
+            <span class="code-block-label">{{label}}</span>
+            <pre>{{#lines}}{{{.}}}
+{{/lines}}</pre>
+          </div>
+          {{/code_snippet}}
+
+          <!--
+            CONDITIONAL: {{#callout}} — only render if present
+            callout.type drives the CSS class (.warn or .tip)
+          -->
+          {{#callout}}
+          <div class="callout {{type}}">
+            <span class="callout-label">{{label}}</span>
+            <p>{{content}}</p>
+          </div>
+          {{/callout}}
+        </div>
+      </div>
+      {{/FILES}}
+
+    </div>
+    <div class="page-footer">
+      <span class="pf-left">{{META.repo_name_display}} — Owner's Manual · CodeReceipt</span>
+      <span class="pf-num">04</span><!-- increment per page -->
+    </div>
   </div>
-  {{/FILES}}
 </div>
 
-<!-- ═══════════════════════════════════════════════════════
-     MAINTENANCE  (marker required by builder.py)
-════════════════════════════════════════════════════════ -->
+
+<!-- ══════════════════════════════════════════════════
+     PAGE 5 — MAINTENANCE GUIDE
+     Data fields: MAINTENANCE.*
+     ══════════════════════════════════════════════════ -->
 <div class="page" id="page-maintenance">
-  <div class="page-header">
-    <span class="section-label">03 / Maintenance Guide</span>
-    <span class="cr-mark">CR</span>
-    <span class="page-num">{{MAINTENANCE_PAGE_NUMBER}}</span>
-  </div>
-
-  <h2>Maintenance</h2>
-
-  {{#MAINTENANCE}}
-  {{#how_to_add_page}}
-  <p class="maintenance-intro">{{{intro}}}</p>
-  <div class="code-block">
-    <div class="code-label">{{code_label}}</div>
-    {{#code_lines}}<div>{{.}}</div>{{/code_lines}}
-  </div>
-  {{/how_to_add_page}}
-
-  <h4>Service Schedule</h4>
-  <table class="service-table">
-    <thead>
-      <tr>
-        <th>Area</th>
-        <th>Issue</th>
-        <th>Action</th>
-        <th>Priority</th>
-      </tr>
-    </thead>
-    <tbody>
-      {{#service_schedule}}
-      <tr>
-        <td>{{area}}</td>
-        <td>{{issue}}</td>
-        <td>{{action}}</td>
-        <td class="priority-{{priority}}">{{priority}}</td>
-      </tr>
-      {{/service_schedule}}
-    </tbody>
-  </table>
-
-  <div class="two-col">
-    <div>
-      <h4>Do Not Touch</h4>
-      {{#do_not_touch}}
-      <div class="dont-touch-item">
-        <div class="dont-touch-name">{{name}}</div>
-        <div class="dont-touch-reason">{{reason}}</div>
-      </div>
-      {{/do_not_touch}}
+  <div class="inner-page">
+    <div class="page-header">
+      <span class="ph-left">{{META.repo_name_display}} — Owner's Manual</span>
+      <span class="ph-chapter">Chapter 03 — Maintenance Guide</span>
+      <span class="ph-right">CodeReceipt</span>
     </div>
-    <div>
-      <h4>Safe to Edit</h4>
-      <div class="safe-list">
-        {{#safe_to_edit}}<span class="safe-item">{{value}}</span>{{/safe_to_edit}}
+    <div class="page-content">
+      <div class="chapter-opener">
+        <div class="chapter-num-block">03</div>
+        <div class="chapter-title-block">
+          <div class="chapter-label">// Chapter Three</div>
+          <h1 class="chapter-title">Maintenance Guide</h1>
+          <p class="chapter-desc">The service schedule for your app. What needs attention, how to extend it safely, and what to leave alone.</p>
+        </div>
+      </div>
+
+      <!-- 3.1 How to add a page -->
+      <span class="section-label">3.1 / How to Add a New Page</span>
+      <p class="doc-p">{{MAINTENANCE.how_to_add_page.intro}}</p>
+      <div class="code-block">
+        <span class="code-block-label">{{MAINTENANCE.how_to_add_page.code_label}}</span>
+        <pre>{{#MAINTENANCE.how_to_add_page.code_lines}}{{{.}}}
+{{/MAINTENANCE.how_to_add_page.code_lines}}</pre>
+      </div>
+
+      <!-- 3.2 Service schedule table -->
+      <span class="section-label">3.2 / Service Schedule</span>
+      <table class="maint-table">
+        <thead>
+          <tr>
+            <th>Area</th>
+            <th>Issue Detected</th>
+            <th>Action</th>
+            <th>Priority</th>
+          </tr>
+        </thead>
+        <tbody>
+          <!--
+            TEMPLATE LOOP: {{#MAINTENANCE.service_schedule}}
+            priority drives .severity class: high | med | low
+          -->
+          {{#MAINTENANCE.service_schedule}}
+          <tr>
+            <td><code>{{area}}</code></td>
+            <td>{{issue}}</td>
+            <td>{{action}}</td>
+            <td><span class="severity {{priority}}">{{priority}}</span></td>
+          </tr>
+          {{/MAINTENANCE.service_schedule}}
+        </tbody>
+      </table>
+
+      <!-- 3.3 Do Not Touch -->
+      <span class="section-label">3.3 / Do Not Touch</span>
+      <div class="callout warn">
+        <span class="callout-label">⚠ High Risk — Do Not Edit Without Understanding</span>
+        <p>
+          <!--
+            TEMPLATE LOOP: {{#MAINTENANCE.do_not_touch}}
+            Render as inline list: <strong>name</strong> — reason &nbsp;
+          -->
+          {{#MAINTENANCE.do_not_touch}}<strong>{{name}}</strong> — {{reason}} &nbsp; {{/MAINTENANCE.do_not_touch}}
+        </p>
+      </div>
+
+      <div class="callout tip">
+        <span class="callout-label">// Safe to experiment with</span>
+        <p>
+          <!--
+            TEMPLATE LOOP: {{#MAINTENANCE.safe_to_edit}}
+            Render as comma-separated inline list
+          -->
+          {{#MAINTENANCE.safe_to_edit}}<code>{{.}}</code>{{^isLast}}, {{/isLast}}{{/MAINTENANCE.safe_to_edit}}
+        </p>
       </div>
     </div>
+    <div class="page-footer">
+      <span class="pf-left">{{META.repo_name_display}} — Owner's Manual · CodeReceipt</span>
+      <span class="pf-num">05</span><!-- update with actual page number -->
+    </div>
   </div>
-  {{/MAINTENANCE}}
 </div>
 
-<!-- ═══════════════════════════════════════════════════════
-     GLOSSARY
-════════════════════════════════════════════════════════ -->
-<div class="page page-glossary">
-  <div class="page-header">
-    <span class="section-label">04 / Concept Glossary</span>
-    <span class="cr-mark">CR</span>
-    <span class="page-num">{{GLOSSARY_PAGE_NUMBER}}</span>
-  </div>
 
-  <h2>Glossary</h2>
-
-  {{#GLOSSARY}}
-  <div class="glossary-item">
-    <div class="glossary-left">
-      <div class="glossary-term">{{term}}</div>
-      <span class="glossary-tag">{{tag}}</span>
+<!-- ══════════════════════════════════════════════════
+     PAGE 6 — CONCEPT GLOSSARY
+     Data fields: GLOSSARY[] array
+     ══════════════════════════════════════════════════ -->
+<div class="page" id="page-glossary">
+  <div class="inner-page">
+    <div class="page-header">
+      <span class="ph-left">{{META.repo_name_display}} — Owner's Manual</span>
+      <span class="ph-chapter">Chapter 04 — Concept Glossary</span>
+      <span class="ph-right">CodeReceipt</span>
     </div>
-    <div class="glossary-def">{{{definition}}}</div>
+    <div class="page-content">
+      <div class="chapter-opener">
+        <div class="chapter-num-block">04</div>
+        <div class="chapter-title-block">
+          <div class="chapter-label">// Chapter Four</div>
+          <h1 class="chapter-title">Concept Glossary</h1>
+          <p class="chapter-desc">The terms and patterns your AI used — explained plainly so you actually understand what you're maintaining.</p>
+        </div>
+      </div>
+
+      <span class="section-label">4.1 / Terms Used in This Codebase</span>
+
+      <!--
+        TEMPLATE LOOP: {{#GLOSSARY}}
+        definition may contain raw HTML (<strong>, <code>) — render unescaped {{{definition}}}
+      -->
+      {{#GLOSSARY}}
+      <div class="glossary-item">
+        <div class="gl-term">{{term}}<span class="gl-tag">{{tag}}</span></div>
+        <div class="gl-def">{{{definition}}}</div>
+      </div>
+      {{/GLOSSARY}}
+
+      <hr class="divider" style="margin-top:24px">
+      <div style="display:flex; justify-content:space-between; padding-top:8px">
+        <span style="font-family:var(--mono); font-size:9px; letter-spacing:0.15em; text-transform:uppercase; opacity:0.35;">Generated by CodeReceipt · codereceipt.io</span>
+        <span style="font-family:var(--mono); font-size:9px; letter-spacing:0.15em; text-transform:uppercase; opacity:0.35;">End of Manual · {{META.repo_name_display}} {{META.version}}</span>
+      </div>
+    </div>
+    <div class="page-footer">
+      <span class="pf-left">{{META.repo_name_display}} — Owner's Manual · CodeReceipt</span>
+      <span class="pf-num">06</span><!-- update with actual page number -->
+    </div>
   </div>
-  {{/GLOSSARY}}
 </div>
 
 </body>
