@@ -47,8 +47,10 @@ async def _ingest_github(parts: list[str], github_limit_mb: int) -> tuple[list[R
     async with httpx.AsyncClient(timeout=30) as client:
         repo_resp = await client.get(f'https://api.github.com/repos/{owner}/{repo}', headers=headers)
         if repo_resp.status_code != 200:
-            raise RepoIngestionError('Unable to access GitHub repository metadata.')
+            raise RepoIngestionError('Unable to access GitHub repository metadata. Only public repositories are supported.')
         repo_data = repo_resp.json()
+        if repo_data.get('private'):
+            raise RepoIngestionError('Private repositories are not supported. Please provide a public repository URL or upload a ZIP file.')
         size_kb = repo_data.get('size', 0)
         if size_kb > github_limit_mb * 1024:
             raise RepoIngestionError(f'GitHub repository exceeds {github_limit_mb}MB limit.')
