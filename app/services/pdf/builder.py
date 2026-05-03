@@ -297,9 +297,9 @@ async def build_pdf_bytes(session: dict[str, Any]) -> bytes:
     html_string = render_manual_html(session)
     try:
         async with async_playwright() as playwright:
-            browser = await playwright.chromium.launch()
+            browser = await playwright.chromium.launch(args=['--no-sandbox', '--disable-setuid-sandbox'])
             page = await browser.new_page(viewport={'width': 794, 'height': 1123})
-            await page.set_content(html_string, wait_until='load')
+            await page.set_content(html_string, wait_until='networkidle')
             pdf_bytes = await page.pdf(
                 format='A4',
                 print_background=True,
@@ -310,5 +310,5 @@ async def build_pdf_bytes(session: dict[str, Any]) -> bytes:
             return pdf_bytes
     except PlaywrightError as exc:
         raise PdfRenderError(
-            'Playwright Chromium is not installed. Run: python3 -m playwright install chromium'
+            'PDF rendering failed in headless Chromium. Ensure Playwright dependencies are installed and Chromium can run in no-sandbox mode.'
         ) from exc

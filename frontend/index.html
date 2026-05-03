@@ -1227,6 +1227,9 @@ function App() {
           {mode === 'url' ? (
             <div className="url-section">
               <p className="input-label">Repository URL</p>
+              <p className="input-label" style={{ marginTop: -10, marginBottom: 12, opacity: 0.7 }}>
+                Public repos only (GitHub, GitLab, Bitbucket). Private repos are not supported.
+              </p>
               <div className="url-input-wrap">
                 <span className="url-prefix">https://</span>
                 <input
