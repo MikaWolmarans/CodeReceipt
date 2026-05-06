@@ -1,7 +1,5 @@
 services:
   - type: web
     name: codereceipt-api
-    env: python
-    buildCommand: pip install -r requirements.txt && python -m playwright install chromium --with-deps
-    startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    env: docker
     autoDeploy: true
