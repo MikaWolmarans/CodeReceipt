@@ -96,11 +96,19 @@ async def analyse_repository(files: list[RepoFile], stack: dict[str, list[str]],
     chunk_results = []
     for i, chunk in enumerate(chunks):
         prompt = pass_one_prompt(chunk)
-        summary = await session.complete(prompt, max_tokens=chunk_output_tokens)
+        raw = await session.complete(prompt, max_tokens=chunk_output_tokens)
+        file_summaries = llm_client.try_parse_json(raw)
+        # Convert per-file JSON to readable text for the synthesis step
+        if isinstance(file_summaries, dict) and file_summaries:
+            synthesis_text = '\n'.join(f'{k}: {v}' for k, v in file_summaries.items())
+        else:
+            file_summaries = {}
+            synthesis_text = raw
         chunk_results.append({
             'chunk_id': f'chunk-{i + 1}',
             'file_paths': [f.path for f in chunk],
-            'summary': summary,
+            'summary': synthesis_text,
+            'file_summaries': file_summaries,
         })
 
     synth_prompt = synthesis_prompt([c['summary'] for c in chunk_results], stack, options)

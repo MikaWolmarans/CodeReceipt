@@ -16,6 +16,19 @@ class PdfRenderError(Exception):
     pass
 
 
+def _strip_markdown(text: str) -> str:
+    """Remove common markdown formatting so descriptions render as plain text."""
+    text = re.sub(r'#{1,6}\s*', '', text)                        # headings
+    text = re.sub(r'\*{1,3}(.+?)\*{1,3}', r'\1', text)          # bold/italic
+    text = re.sub(r'`{1,3}(.+?)`{1,3}', r'\1', text, flags=re.DOTALL)  # code
+    text = re.sub(r'^\s*[-*+]\s+', '', text, flags=re.MULTILINE) # bullets
+    text = re.sub(r'^\s*\d+\.\s+', '', text, flags=re.MULTILINE) # numbered lists
+    text = re.sub(r'\[(.+?)\]\(.+?\)', r'\1', text)              # links
+    text = re.sub(r'\s+', ' ', text)
+    return text.strip()
+    pass
+
+
 TEMPLATE_PATH = Path(__file__).parent / 'template.html'
 
 
@@ -100,10 +113,19 @@ def _file_tree(chunks: list[dict[str, Any]], repo_name: str) -> list[dict[str, A
 
 def _file_cards(chunks: list[dict[str, Any]], synthesis: dict[str, Any]) -> list[dict[str, Any]]:
     cards: list[dict[str, Any]] = []
-    file_reference = _text(synthesis.get('file_reference'))
+    fallback = _text(synthesis.get('file_reference')) or 'This file is part of the application codebase.'
     for chunk in chunks:
-        summary = _sentence(chunk.get('summary'), file_reference or 'This file is part of the application codebase.')
+        file_summaries: dict[str, str] = chunk.get('file_summaries') or {}
+        chunk_summary = _text(chunk.get('summary')) or fallback
         for path in chunk.get('file_paths') or []:
+            # Prefer file-specific summary; fall back to chunk summary then global fallback
+            raw = (
+                file_summaries.get(path)
+                or file_summaries.get(path.split('/')[-1])
+                or chunk_summary
+                or fallback
+            )
+            description = _strip_markdown(_sentence(raw, fallback))[:320]
             dir_part, _, file_name = path.rpartition('/')
             lower = path.lower()
             tags = [{'label': 'Key File', 'highlight': True}]
@@ -119,7 +141,7 @@ def _file_cards(chunks: list[dict[str, Any]], synthesis: dict[str, Any]) -> list
                     'dir_part': f'{dir_part}/' if dir_part else '',
                     'file_name': file_name or path,
                     'tags': tags,
-                    'description': summary[:650],
+                    'description': description,
                     'meta': {
                         'used_by': 'Application runtime',
                         'depends_on': 'Nearby modules and configured services',
@@ -171,7 +193,7 @@ def build_manual_data(session: dict[str, Any]) -> dict[str, Any]:
     generated_at = datetime.now(timezone.utc)
 
     file_cards = _file_cards(chunks, synthesis)
-    file_page_count = max(1, math.ceil(len(file_cards) / 3))
+    file_page_count = max(1, math.ceil(len(file_cards) / 2))
     total_pages = 5 + file_page_count
 
     toc = [
@@ -228,7 +250,7 @@ def build_manual_data(session: dict[str, Any]) -> dict[str, Any]:
                 'page_number': f'{4 + index:02d}',
                 'FILES': page,
             }
-            for index, page in enumerate([file_cards[i : i + 3] for i in range(0, len(file_cards), 3)] or [file_cards])
+            for index, page in enumerate([file_cards[i : i + 2] for i in range(0, len(file_cards), 2)] or [file_cards])
         ],
         'MAINTENANCE_PAGE_NUMBER': f'{4 + file_page_count:02d}',
         'GLOSSARY_PAGE_NUMBER': f'{5 + file_page_count:02d}',
