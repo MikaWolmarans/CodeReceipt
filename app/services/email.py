@@ -1,12 +1,17 @@
+import logging
+
 import httpx
 
 from app.config import get_settings
+
+logger = logging.getLogger(__name__)
 
 
 async def send_manual_ready_email(to_email: str, session_id: str, repo_name: str) -> None:
     """Send a 'your manual is ready' email via Resend."""
     settings = get_settings()
     if not settings.resend_api_key:
+        logger.warning('RESEND_API_KEY not set — skipping email to %s', to_email)
         return
 
     download_url = f"{settings.frontend_url}/export/{session_id}"
@@ -67,8 +72,15 @@ async def send_manual_ready_email(to_email: str, session_id: str, repo_name: str
         }
 
     async with httpx.AsyncClient(timeout=30) as client:
-        await client.post(
+        response = await client.post(
             "https://api.resend.com/emails",
             headers={"Authorization": f"Bearer {settings.resend_api_key}"},
             json=payload,
         )
+    if response.status_code >= 400:
+        logger.error(
+            'Resend API error %s for %s: %s',
+            response.status_code, to_email, response.text,
+        )
+    else:
+        logger.info('Email sent to %s (status %s)', to_email, response.status_code)
