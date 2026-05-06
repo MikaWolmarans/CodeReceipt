@@ -16,23 +16,11 @@ async def send_manual_ready_email(to_email: str, session_id: str, repo_name: str
 
     download_url = f"{settings.frontend_url}/export/{session_id}"
 
-    if settings.resend_template_id:
-        payload = {
-            "from": settings.from_email,
-            "to": [to_email],
-            "subject": f"Your CodeReceipt manual is ready — {repo_name}",
-            "template_id": settings.resend_template_id,
-            "variables": {
-                "repo_name": repo_name,
-                "download_url": download_url,
-            },
-        }
-    else:
-        payload = {
-            "from": settings.from_email,
-            "to": [to_email],
-            "subject": f"Your CodeReceipt manual is ready — {repo_name}",
-            "html": f"""
+    payload = {
+        "from": settings.from_email,
+        "to": [to_email],
+        "subject": f"Your CodeReceipt manual is ready — {repo_name}",
+        "html": f"""
 <!DOCTYPE html>
 <html>
 <head>
@@ -69,7 +57,7 @@ async def send_manual_ready_email(to_email: str, session_id: str, repo_name: str
 </body>
 </html>
 """,
-        }
+    }
 
     async with httpx.AsyncClient(timeout=30) as client:
         response = await client.post(
