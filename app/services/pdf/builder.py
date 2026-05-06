@@ -309,6 +309,6 @@ async def build_pdf_bytes(session: dict[str, Any]) -> bytes:
             await browser.close()
             return pdf_bytes
     except PlaywrightError as exc:
-        raise PdfRenderError(
-            'PDF rendering failed in headless Chromium. Ensure Playwright dependencies are installed and Chromium can run in no-sandbox mode.'
-        ) from exc
+        raise PdfRenderError(f'Playwright error: {exc}') from exc
+    except Exception as exc:
+        raise PdfRenderError(f'Unexpected PDF error ({type(exc).__name__}): {exc}') from exc
