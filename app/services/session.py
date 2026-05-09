@@ -52,26 +52,28 @@ class SessionService:
 
     async def increment_daily_cap_or_reject(self) -> bool:
         today = datetime.now(timezone.utc).date().isoformat()
+        # Always upsert by date only — never include the cap in the filter or
+        # upsert will try to INSERT a second doc when the cap is reached,
+        # conflicting with the unique index on 'date'.
         doc = await self.counters.find_one_and_update(
-            {'date': today, 'count': {'$lt': self.settings.max_daily_analyses}},
+            {'date': today},
             {'$inc': {'count': 1}, '$setOnInsert': {'date': today}},
             upsert=True,
             return_document=ReturnDocument.AFTER,
         )
-        return doc is not None
+        return doc is not None and doc.get('count', 1) <= self.settings.max_daily_analyses
 
     async def increment_free_daily_or_reject(self) -> bool:
-        """Separate cap for free-tier analyses."""
+        """Increment the free-scan counter and return False if the daily cap is exceeded."""
         today = datetime.now(timezone.utc).date().isoformat()
-        # $setOnInsert and $inc cannot touch the same field; initialise the
-        # document with free_count=0 on insert, then let $inc do the increment.
+        # Same pattern: filter on date only to avoid duplicate-key errors on upsert.
         doc = await self.counters.find_one_and_update(
-            {'date': today, 'free_count': {'$lt': self.settings.max_free_analyses_per_day}},
+            {'date': today},
             {'$inc': {'free_count': 1}, '$setOnInsert': {'date': today}},
             upsert=True,
             return_document=ReturnDocument.AFTER,
         )
-        return doc is not None
+        return doc is not None and doc.get('free_count', 1) <= self.settings.max_free_analyses_per_day
 
     # ── Analysis cache ───────────────────────────────────────────────────
 
