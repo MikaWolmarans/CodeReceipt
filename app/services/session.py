@@ -63,9 +63,11 @@ class SessionService:
     async def increment_free_daily_or_reject(self) -> bool:
         """Separate cap for free-tier analyses."""
         today = datetime.now(timezone.utc).date().isoformat()
+        # $setOnInsert and $inc cannot touch the same field; initialise the
+        # document with free_count=0 on insert, then let $inc do the increment.
         doc = await self.counters.find_one_and_update(
             {'date': today, 'free_count': {'$lt': self.settings.max_free_analyses_per_day}},
-            {'$inc': {'free_count': 1}, '$setOnInsert': {'date': today, 'free_count': 0}},
+            {'$inc': {'free_count': 1}, '$setOnInsert': {'date': today}},
             upsert=True,
             return_document=ReturnDocument.AFTER,
         )
