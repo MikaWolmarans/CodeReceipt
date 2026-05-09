@@ -69,7 +69,7 @@ async def analyse_repository(files: list[RepoFile], stack: dict[str, list[str]],
     settings = get_settings()
     max_requests = settings.llm_max_requests_per_analysis
     chunk_output_tokens = 1024
-    synthesis_output_tokens = 2048
+    synthesis_output_tokens = 4096
 
     chunk_max_tokens, n_chunks, est_input, est_output, est_cost = _plan_analysis(
         files, max_requests, chunk_output_tokens, synthesis_output_tokens

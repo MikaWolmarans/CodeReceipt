@@ -1,60 +1,24 @@
 <!DOCTYPE html>
-<!--
-  ╔══════════════════════════════════════════════════════════════════╗
-  ║  CodeReceipt — Owner's Manual PDF Template                      ║
-  ║  Version: 1.0.0                                                 ║
-  ║                                                                 ║
-  ║  USAGE                                                          ║
-  ║  This file is a Mustache/Handlebars-style HTML template.        ║
-  ║  {{VARIABLE}} = string substitution                             ║
-  ║  {{#BLOCK}}...{{/BLOCK}} = conditional or loop block            ║
-  ║                                                                 ║
-  ║  Render this template server-side, then pass to Puppeteer:      ║
-  ║  await page.pdf({                                               ║
-  ║    format: 'A4',                                                ║
-  ║    printBackground: true,   // REQUIRED                         ║
-  ║    margin: { top:0, bottom:0, left:0, right:0 },                ║
-  ║    preferCSSPageSize: true,                                     ║
-  ║  })                                                             ║
-  ║                                                                 ║
-  ║  See schema.json for full data model.                           ║
-  ║  See README.md for implementation guide.                        ║
-  ╚══════════════════════════════════════════════════════════════════╝
--->
 <html lang="en">
 <head>
-
 <meta charset="UTF-8">
 <title>{{META.repo_name_display}} — Owner's Manual · CodeReceipt</title>
-
-<!--
-  FONTS
-  Self-host these for headless rendering. Replace with @font-face
-  declarations pointing to locally served font files.
--->
 <link href="https://fonts.googleapis.com/css2?family=Space+Mono:ital,wght@0,400;0,700;1,400&family=Space+Grotesk:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-
 <style>
-/* ════════════════════════════════════════════════════
-   DESIGN TOKENS — do not change these values
-   ════════════════════════════════════════════════════ */
 :root {
   --black:  #0A0A0A;
   --cream:  #F2EDE3;
   --yellow: #E8FF00;
   --red:    #FF2B2B;
+  --orange: #FF8C00;
+  --green:  #00C853;
   --ink:    #1A1A18;
   --mono: 'Space Mono', monospace;
   --sans: 'Space Grotesk', sans-serif;
-
-  /* A4 portrait at 96dpi — do not change */
   --page-w: 794px;
   --page-h: 1123px;
 }
 
-/* ════════════════════════════════════════════════════
-   RESET & BASE
-   ════════════════════════════════════════════════════ */
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
 body {
@@ -65,11 +29,6 @@ body {
   print-color-adjust: exact;
 }
 
-/* ════════════════════════════════════════════════════
-   PAGE CONTAINER
-   Each .page is one A4 page. break-after forces a new
-   page in Puppeteer / print.
-   ════════════════════════════════════════════════════ */
 .page {
   width: var(--page-w);
   height: var(--page-h);
@@ -80,9 +39,7 @@ body {
   background: var(--cream);
 }
 
-/* ════════════════════════════════════════════════════
-   PAGE 1 — COVER
-   ════════════════════════════════════════════════════ */
+/* ── COVER ─────────────────────────────────── */
 .cover {
   background: var(--black);
   display: flex;
@@ -91,502 +48,260 @@ body {
   -webkit-print-color-adjust: exact;
   print-color-adjust: exact;
 }
-
-/* Top yellow stripe */
-.cover-stripe {
-  height: 10px;
-  background: var(--yellow);
-  flex-shrink: 0;
-  -webkit-print-color-adjust: exact;
-  print-color-adjust: exact;
-}
-
-/* Left yellow border on main body */
-.cover-body {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  padding: 64px 64px 0;
-  border-left: 8px solid var(--yellow);
-}
-
-.cover-eyebrow {
-  font-family: var(--mono);
-  font-size: 10px;
-  letter-spacing: 0.3em;
-  text-transform: uppercase;
-  color: rgba(255,255,255,0.35);
-  margin-bottom: 48px;
-  display: flex;
-  align-items: center;
-  gap: 16px;
-}
-.cover-eyebrow::after {
-  content: '';
-  flex: 1;
-  height: 1px;
-  background: rgba(255,255,255,0.1);
-}
-
-.cover-manual-label {
-  font-family: var(--mono);
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 0.25em;
-  text-transform: uppercase;
-  color: var(--yellow);
-  margin-bottom: 20px;
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
+.cover-stripe { height: 10px; background: var(--yellow); flex-shrink: 0; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+.cover-body { flex: 1; display: flex; flex-direction: column; padding: 56px 64px 0; border-left: 8px solid var(--yellow); }
+.cover-eyebrow { font-family: var(--mono); font-size: 10px; letter-spacing: 0.3em; text-transform: uppercase; color: rgba(255,255,255,0.35); margin-bottom: 40px; display: flex; align-items: center; gap: 16px; }
+.cover-eyebrow::after { content: ''; flex: 1; height: 1px; background: rgba(255,255,255,0.1); }
+.cover-manual-label { font-family: var(--mono); font-size: 11px; font-weight: 700; letter-spacing: 0.25em; text-transform: uppercase; color: var(--yellow); margin-bottom: 16px; display: flex; align-items: center; gap: 12px; }
 .cover-manual-label::before { content: '▶'; font-size: 8px; }
-
-/* Main title — split rendering:
-   .cover-title-main = white portion
-   .cover-title-accent = --yellow portion (last word of repo name) */
-.cover-title {
-  font-size: 96px;
-  font-weight: 800;
-  letter-spacing: -0.04em;
-  line-height: 0.88;
-  text-transform: uppercase;
-  margin-bottom: 8px;
-  -webkit-print-color-adjust: exact;
-  print-color-adjust: exact;
-}
+.cover-title { font-size: 88px; font-weight: 800; letter-spacing: -0.04em; line-height: 0.88; text-transform: uppercase; margin-bottom: 8px; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
 .cover-title-main   { color: #fff; }
 .cover-title-accent { color: var(--yellow); }
-
-.cover-subtitle {
-  font-size: 28px;
-  font-weight: 300;
-  color: rgba(255,255,255,0.45);
-  letter-spacing: -0.02em;
-  text-transform: uppercase;
-  margin-top: 16px;
-  margin-bottom: 64px;
-}
-
-/* 6-cell metadata grid */
-.cover-meta-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr 1fr;
-  border: 1px solid rgba(255,255,255,0.12);
-  margin-bottom: 48px;
-  -webkit-print-color-adjust: exact;
-  print-color-adjust: exact;
-}
-.cover-meta-cell {
-  padding: 18px 20px;
-  border-right: 1px solid rgba(255,255,255,0.12);
-}
+.cover-subtitle { font-size: 24px; font-weight: 300; color: rgba(255,255,255,0.45); letter-spacing: -0.02em; text-transform: uppercase; margin-top: 12px; margin-bottom: 48px; }
+.cover-meta-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; border: 1px solid rgba(255,255,255,0.12); margin-bottom: 32px; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+.cover-meta-cell { padding: 14px 18px; border-right: 1px solid rgba(255,255,255,0.12); }
 .cover-meta-cell:nth-child(3n) { border-right: none; }
-.cmc-label {
-  font-family: var(--mono);
-  font-size: 9px;
-  letter-spacing: 0.2em;
-  text-transform: uppercase;
-  color: rgba(255,255,255,0.3);
-  margin-bottom: 6px;
-  display: block;
-}
-.cmc-value         { font-family: var(--mono); font-size: 13px; color: #fff; font-weight: 700; }
-.cmc-value.yellow  { color: var(--yellow); }
-
-/* Red warning notice */
-.cover-warning {
-  background: var(--red);
-  padding: 14px 20px;
-  display: flex;
-  align-items: flex-start;
-  gap: 12px;
-  -webkit-print-color-adjust: exact;
-  print-color-adjust: exact;
-}
-.cover-warning-icon {
-  font-family: var(--mono);
-  font-size: 11px;
-  font-weight: 700;
-  color: #fff;
-  white-space: nowrap;
-  letter-spacing: 0.1em;
-}
-.cover-warning p {
-  font-family: var(--mono);
-  font-size: 10px;
-  color: rgba(255,255,255,0.85);
-  line-height: 1.6;
-  letter-spacing: 0.03em;
-}
-
-.cover-footer {
-  height: 80px;
-  border-top: 1px solid rgba(255,255,255,0.08);
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 0 64px;
-  flex-shrink: 0;
-}
-.cover-footer-brand {
-  font-family: var(--mono);
-  font-size: 13px;
-  font-weight: 700;
-  letter-spacing: 0.1em;
-  color: rgba(255,255,255,0.2);
-}
+.cmc-label { font-family: var(--mono); font-size: 9px; letter-spacing: 0.2em; text-transform: uppercase; color: rgba(255,255,255,0.3); margin-bottom: 5px; display: block; }
+.cmc-value { font-family: var(--mono); font-size: 12px; color: #fff; font-weight: 700; }
+.cmc-value.yellow { color: var(--yellow); }
+.cover-warning { background: var(--red); padding: 12px 18px; display: flex; align-items: flex-start; gap: 12px; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+.cover-warning-icon { font-family: var(--mono); font-size: 10px; font-weight: 700; color: #fff; white-space: nowrap; letter-spacing: 0.1em; }
+.cover-warning p { font-family: var(--mono); font-size: 10px; color: rgba(255,255,255,0.85); line-height: 1.6; letter-spacing: 0.02em; }
+.cover-footer { height: 72px; border-top: 1px solid rgba(255,255,255,0.08); display: flex; align-items: center; justify-content: space-between; padding: 0 64px; flex-shrink: 0; }
+.cover-footer-brand { font-family: var(--mono); font-size: 12px; font-weight: 700; letter-spacing: 0.1em; color: rgba(255,255,255,0.2); }
 .cover-footer-brand strong { color: var(--yellow); }
-.cover-footer-page {
-  font-family: var(--mono);
-  font-size: 10px;
-  color: rgba(255,255,255,0.2);
-  letter-spacing: 0.2em;
-}
+.cover-footer-page { font-family: var(--mono); font-size: 10px; color: rgba(255,255,255,0.2); letter-spacing: 0.2em; }
 
-/* ════════════════════════════════════════════════════
-   INNER PAGE CHROME (Pages 2–6)
-   ════════════════════════════════════════════════════ */
-.inner-page {
-  display: flex;
-  flex-direction: column;
-  height: var(--page-h);
-}
-
-/* Top bar */
-.page-header {
-  height: 48px;
-  background: var(--black);
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 0 40px;
-  flex-shrink: 0;
-  -webkit-print-color-adjust: exact;
-  print-color-adjust: exact;
-}
+/* ── INNER PAGE CHROME ──────────────────────── */
+.inner-page { display: flex; flex-direction: column; height: var(--page-h); }
+.page-header { height: 44px; background: var(--black); display: flex; align-items: center; justify-content: space-between; padding: 0 36px; flex-shrink: 0; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
 .ph-left    { font-family: var(--mono); font-size: 9px; letter-spacing: 0.2em; text-transform: uppercase; color: rgba(255,255,255,0.35); }
 .ph-chapter { font-family: var(--mono); font-size: 9px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--yellow); }
 .ph-right   { font-family: var(--mono); font-size: 9px; color: rgba(255,255,255,0.2); letter-spacing: 0.15em; }
-
-/* Content area */
-.page-content { flex: 1; padding: 48px 40px 0; overflow: hidden; }
-
-/* Bottom bar */
-.page-footer {
-  height: 40px;
-  border-top: 2px solid var(--black);
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 0 40px;
-  flex-shrink: 0;
-}
+.page-content { flex: 1; padding: 36px 36px 0; overflow: hidden; }
+.page-footer { height: 36px; border-top: 2px solid var(--black); display: flex; align-items: center; justify-content: space-between; padding: 0 36px; flex-shrink: 0; }
 .pf-left { font-family: var(--mono); font-size: 9px; letter-spacing: 0.12em; text-transform: uppercase; color: rgba(0,0,0,0.3); }
 .pf-num  { font-family: var(--mono); font-size: 11px; font-weight: 700; color: var(--black); }
 
-/* ════════════════════════════════════════════════════
-   CHAPTER OPENER
-   Large chapter number (black block, yellow text) + title
-   ════════════════════════════════════════════════════ */
-.chapter-opener {
-  display: flex;
-  align-items: flex-start;
-  gap: 0;
-  margin-bottom: 40px;
-  border-bottom: 3px solid var(--black);
-  padding-bottom: 32px;
-}
-.chapter-num-block {
-  background: var(--black);
-  color: var(--yellow);
-  font-family: var(--mono);
-  font-size: 56px;
-  font-weight: 700;
-  line-height: 1;
-  padding: 16px 24px;
-  letter-spacing: -0.04em;
-  flex-shrink: 0;
-  margin-right: 24px;
-  align-self: flex-start;
-  -webkit-print-color-adjust: exact;
-  print-color-adjust: exact;
-}
-.chapter-label {
-  font-family: var(--mono);
-  font-size: 10px;
-  letter-spacing: 0.2em;
-  text-transform: uppercase;
-  opacity: 0.4;
-  margin-bottom: 8px;
-}
-.chapter-title {
-  font-size: 44px;
-  font-weight: 800;
-  letter-spacing: -0.03em;
-  text-transform: uppercase;
-  line-height: 1;
-  margin-bottom: 12px;
-}
-.chapter-desc {
-  font-size: 14px;
-  line-height: 1.65;
-  opacity: 0.6;
-  max-width: 480px;
-}
+/* ── CHAPTER OPENER ─────────────────────────── */
+.chapter-opener { display: flex; align-items: flex-start; gap: 0; margin-bottom: 28px; border-bottom: 3px solid var(--black); padding-bottom: 24px; }
+.chapter-num-block { background: var(--black); color: var(--yellow); font-family: var(--mono); font-size: 48px; font-weight: 700; line-height: 1; padding: 12px 20px; letter-spacing: -0.04em; flex-shrink: 0; margin-right: 20px; align-self: flex-start; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+.chapter-label { font-family: var(--mono); font-size: 10px; letter-spacing: 0.2em; text-transform: uppercase; opacity: 0.4; margin-bottom: 6px; }
+.chapter-title { font-size: 36px; font-weight: 800; letter-spacing: -0.03em; text-transform: uppercase; line-height: 1; margin-bottom: 8px; }
+.chapter-desc  { font-size: 13px; line-height: 1.6; opacity: 0.6; max-width: 480px; }
 
-/* ════════════════════════════════════════════════════
-   TYPOGRAPHY UTILITIES
-   ════════════════════════════════════════════════════ */
-.section-label {
-  font-family: var(--mono);
-  font-size: 9px;
-  letter-spacing: 0.25em;
-  text-transform: uppercase;
-  opacity: 0.4;
-  margin-bottom: 8px;
-  display: block;
-}
-.doc-p {
-  font-size: 13.5px;
-  line-height: 1.7;
-  opacity: 0.75;
-  margin-bottom: 16px;
-  max-width: 640px;
-}
-code {
-  font-family: var(--mono);
-  font-size: 11px;
-  background: rgba(0,0,0,0.07);
-  padding: 1px 5px;
-  letter-spacing: 0.02em;
-}
+/* ── TYPOGRAPHY ─────────────────────────────── */
+.section-label { font-family: var(--mono); font-size: 9px; letter-spacing: 0.25em; text-transform: uppercase; opacity: 0.4; margin-bottom: 8px; display: block; }
+.doc-p { font-size: 13px; line-height: 1.7; opacity: 0.75; margin-bottom: 14px; max-width: 640px; }
+code { font-family: var(--mono); font-size: 11px; background: rgba(0,0,0,0.07); padding: 1px 5px; letter-spacing: 0.02em; }
 
-/* ════════════════════════════════════════════════════
-   TABLE OF CONTENTS
-   ════════════════════════════════════════════════════ */
+/* ── TOC ────────────────────────────────────── */
 .toc-list  { list-style: none; border-top: 2px solid var(--black); }
-.toc-item  {
-  display: flex;
-  align-items: baseline;
-  border-bottom: 1px solid rgba(0,0,0,0.1);
-  padding: 14px 0;
-}
-.toc-item.chapter {
-  border-bottom: 2px solid var(--black);
-}
-.toc-num   { font-family: var(--mono); font-size: 10px; color: rgba(0,0,0,0.35); width: 40px; flex-shrink: 0; letter-spacing: 0.1em; }
-.toc-title { flex: 1; font-size: 14px; font-weight: 500; letter-spacing: -0.01em; }
-.toc-item.chapter .toc-title { font-size: 16px; font-weight: 800; text-transform: uppercase; letter-spacing: -0.02em; }
-.toc-dots  { flex: 1; border-bottom: 1px dotted rgba(0,0,0,0.2); margin: 0 12px; margin-bottom: 3px; }
+.toc-item  { display: flex; align-items: baseline; border-bottom: 1px solid rgba(0,0,0,0.1); padding: 10px 0; }
+.toc-item.chapter { border-bottom: 2px solid var(--black); padding: 12px 0; }
+.toc-num   { font-family: var(--mono); font-size: 10px; color: rgba(0,0,0,0.35); width: 36px; flex-shrink: 0; letter-spacing: 0.1em; }
+.toc-title { flex: 1; font-size: 13px; font-weight: 500; }
+.toc-item.chapter .toc-title { font-size: 14px; font-weight: 800; text-transform: uppercase; letter-spacing: -0.01em; }
+.toc-dots  { flex: 1; border-bottom: 1px dotted rgba(0,0,0,0.2); margin: 0 10px; margin-bottom: 3px; }
 .toc-page  { font-family: var(--mono); font-size: 11px; font-weight: 700; }
-.toc-item.chapter .toc-page {
-  background: var(--black);
-  color: var(--yellow);
-  padding: 2px 8px;
-  font-size: 10px;
-  -webkit-print-color-adjust: exact;
-  print-color-adjust: exact;
-}
-.toc-sub   { padding-left: 40px; }
+.toc-item.chapter .toc-page { background: var(--black); color: var(--yellow); padding: 2px 7px; font-size: 10px; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
 
-/* ════════════════════════════════════════════════════
-   STACK BADGES
-   ════════════════════════════════════════════════════ */
-.stack-row  { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 28px; }
-.stack-badge {
-  font-family: var(--mono);
-  font-size: 10px;
-  font-weight: 700;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  border: 2px solid var(--black);
-  padding: 6px 12px;
-  display: flex;
-  align-items: center;
-  gap: 7px;
-}
+/* ── STACK BADGES ───────────────────────────── */
+.stack-row  { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 20px; }
+.stack-badge { font-family: var(--mono); font-size: 10px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; border: 2px solid var(--black); padding: 5px 10px; display: flex; align-items: center; gap: 6px; }
 .stack-badge .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--black); flex-shrink: 0; }
-/* Add class .hl for highlighted (primary stack) badges */
-.stack-badge.hl {
-  background: var(--yellow);
-  -webkit-print-color-adjust: exact;
-  print-color-adjust: exact;
-}
+.stack-badge.hl { background: var(--yellow); -webkit-print-color-adjust: exact; print-color-adjust: exact; }
 
-/* ════════════════════════════════════════════════════
-   FILE TREE PANEL
-   ════════════════════════════════════════════════════ */
-.file-tree {
-  background: var(--black);
-  padding: 24px 28px;
-  margin-bottom: 32px;
-  -webkit-print-color-adjust: exact;
-  print-color-adjust: exact;
-}
-.ft-header {
-  font-family: var(--mono);
-  font-size: 10px;
-  color: rgba(255,255,255,0.3);
-  letter-spacing: 0.15em;
-  text-transform: uppercase;
-  margin-bottom: 16px;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
+/* ── FILE TREE ──────────────────────────────── */
+.file-tree { background: var(--black); padding: 20px 24px; margin-bottom: 24px; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+.ft-header { font-family: var(--mono); font-size: 10px; color: rgba(255,255,255,0.3); letter-spacing: 0.15em; text-transform: uppercase; margin-bottom: 12px; display: flex; align-items: center; gap: 8px; }
 .ft-header::after { content: ''; flex: 1; height: 1px; background: rgba(255,255,255,0.08); }
-.ft-line { font-family: var(--mono); font-size: 11px; color: rgba(255,255,255,0.5); line-height: 1.9; }
+.ft-line { font-family: var(--mono); font-size: 11px; color: rgba(255,255,255,0.5); line-height: 1.85; }
 .ft-line .dir  { color: rgba(255,255,255,0.8); font-weight: 700; }
 .ft-line .file { color: rgba(255,255,255,0.55); }
-.ft-line .badge         { display: inline-block; background: rgba(232,255,0,0.12); color: var(--yellow); font-size: 9px; padding: 1px 6px; margin-left: 8px; letter-spacing: 0.08em; vertical-align: middle; }
+.ft-line .badge         { display: inline-block; background: rgba(232,255,0,0.12); color: var(--yellow); font-size: 9px; padding: 1px 5px; margin-left: 7px; letter-spacing: 0.08em; vertical-align: middle; }
 .ft-line .badge.red     { background: rgba(255,43,43,0.15); color: #FF6B6B; }
-.ft-line .badge.green   { background: rgba(0,255,127,0.1); color: #00FF7F; }
+.ft-line .badge.green   { background: rgba(0,200,83,0.12); color: #00C853; }
 
-/* ════════════════════════════════════════════════════
-   ARCHITECTURE DIAGRAM
-   3-column layout: Layer | Arrow | Layer | Arrow | Layer
-   ════════════════════════════════════════════════════ */
-.arch-diagram {
-  border: 2px solid var(--black);
-  margin-bottom: 32px;
-  display: grid;
-  grid-template-columns: 1fr 24px 1fr 24px 1fr;
-  align-items: stretch;
-}
-.arch-layer { padding: 20px 18px; border-right: 2px solid var(--black); }
+/* ── ARCH DIAGRAM ───────────────────────────── */
+.arch-diagram { border: 2px solid var(--black); margin-bottom: 24px; display: grid; grid-template-columns: 1fr 24px 1fr 24px 1fr; align-items: stretch; }
+.arch-layer { padding: 16px 16px; border-right: 2px solid var(--black); }
 .arch-layer:last-child { border-right: none; }
-.arch-layer.arrow {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: rgba(0,0,0,0.04);
-  font-size: 16px;
-  padding: 0;
-  border-right: none;
-}
-.arch-layer-label { font-family: var(--mono); font-size: 9px; letter-spacing: 0.2em; text-transform: uppercase; opacity: 0.4; margin-bottom: 10px; }
-.arch-layer-name  { font-size: 15px; font-weight: 800; text-transform: uppercase; letter-spacing: -0.02em; margin-bottom: 8px; }
+.arch-layer.arrow { display: flex; align-items: center; justify-content: center; background: rgba(0,0,0,0.04); font-size: 14px; padding: 0; border-right: none; }
+.arch-layer-label { font-family: var(--mono); font-size: 9px; letter-spacing: 0.2em; text-transform: uppercase; opacity: 0.4; margin-bottom: 8px; }
+.arch-layer-name  { font-size: 14px; font-weight: 800; text-transform: uppercase; letter-spacing: -0.02em; margin-bottom: 7px; }
 .arch-layer-items { list-style: none; }
-.arch-layer-items li { font-family: var(--mono); font-size: 10px; color: rgba(0,0,0,0.55); line-height: 1.9; padding-left: 12px; position: relative; }
+.arch-layer-items li { font-family: var(--mono); font-size: 10px; color: rgba(0,0,0,0.55); line-height: 1.9; padding-left: 10px; position: relative; }
 .arch-layer-items li::before { content: '—'; position: absolute; left: 0; opacity: 0.3; }
 
-/* ════════════════════════════════════════════════════
-   FILE CARDS (Chapter 2)
-   ════════════════════════════════════════════════════ */
-.file-card       { border: 2px solid var(--black); margin-bottom: 20px; }
-.fc-header {
-  background: var(--black);
-  padding: 12px 20px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  -webkit-print-color-adjust: exact;
-  print-color-adjust: exact;
-}
-.fc-path          { font-family: var(--mono); font-size: 11px; color: rgba(255,255,255,0.7); letter-spacing: 0.03em; }
+/* ── FILE CARDS ─────────────────────────────── */
+.file-card { border: 2px solid var(--black); margin-bottom: 16px; }
+.fc-header { background: var(--black); padding: 10px 18px; display: flex; align-items: center; justify-content: space-between; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+.fc-path   { font-family: var(--mono); font-size: 11px; color: rgba(255,255,255,0.7); letter-spacing: 0.03em; }
 .fc-path .dir-part { color: rgba(255,255,255,0.35); }
-.fc-tags          { display: flex; gap: 6px; }
-.fc-tag           { font-family: var(--mono); font-size: 9px; letter-spacing: 0.1em; text-transform: uppercase; padding: 3px 8px; border: 1px solid rgba(255,255,255,0.15); color: rgba(255,255,255,0.45); }
-.fc-tag.yellow    { border-color: rgba(232,255,0,0.4); color: var(--yellow); }
-.fc-body          { padding: 20px; }
-.fc-what          { font-size: 13.5px; line-height: 1.7; opacity: 0.75; margin-bottom: 14px; }
+.fc-tags   { display: flex; gap: 5px; }
+.fc-tag    { font-family: var(--mono); font-size: 9px; letter-spacing: 0.1em; text-transform: uppercase; padding: 2px 7px; border: 1px solid rgba(255,255,255,0.15); color: rgba(255,255,255,0.45); }
+.fc-tag.yellow { border-color: rgba(232,255,0,0.4); color: var(--yellow); }
+.fc-body { padding: 16px 18px; }
+.fc-what { font-size: 12.5px; line-height: 1.65; opacity: 0.75; margin-bottom: 12px; }
+.fc-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0; border: 1px solid rgba(0,0,0,0.12); }
+.fc-grid-cell { padding: 8px 12px; border-right: 1px solid rgba(0,0,0,0.12); border-bottom: 1px solid rgba(0,0,0,0.12); }
+.fc-grid-cell:nth-child(2n) { border-right: none; }
+.fc-grid-cell:nth-last-child(-n+2) { border-bottom: none; }
+.fcg-label { font-family: var(--mono); font-size: 9px; letter-spacing: 0.15em; text-transform: uppercase; opacity: 0.35; margin-bottom: 3px; display: block; }
+.fcg-value { font-family: var(--mono); font-size: 10px; font-weight: 700; line-height: 1.4; }
 
-/* 2×2 metadata grid */
-.fc-grid      { display: grid; grid-template-columns: 1fr 1fr; gap: 0; border: 1px solid rgba(0,0,0,0.12); }
-.fc-grid-cell { padding: 10px 14px; border-right: 1px solid rgba(0,0,0,0.12); border-bottom: 1px solid rgba(0,0,0,0.12); }
-.fc-grid-cell:nth-child(2n)         { border-right: none; }
-.fc-grid-cell:nth-last-child(-n+2)  { border-bottom: none; }
-.fcg-label    { font-family: var(--mono); font-size: 9px; letter-spacing: 0.15em; text-transform: uppercase; opacity: 0.35; margin-bottom: 4px; display: block; }
-.fcg-value    { font-family: var(--mono); font-size: 11px; font-weight: 700; line-height: 1.5; }
-
-/* ════════════════════════════════════════════════════
-   CODE BLOCK
-   Syntax colouring classes:
-   .kw = keyword (--yellow)
-   .fn = function name (#7DFFB3)
-   .str = string (#FF9F7E)
-   .cm = comment (dimmed italic)
-   .ln = line number (dimmed)
-   ════════════════════════════════════════════════════ */
-.code-block {
-  background: var(--black);
-  padding: 20px 24px;
-  margin: 16px 0 20px;
-  -webkit-print-color-adjust: exact;
-  print-color-adjust: exact;
-}
-.code-block-label { font-family: var(--mono); font-size: 9px; letter-spacing: 0.15em; text-transform: uppercase; color: rgba(255,255,255,0.25); margin-bottom: 12px; display: block; }
-.code-block pre   { font-family: var(--mono); font-size: 11px; color: rgba(255,255,255,0.7); line-height: 1.8; white-space: pre; }
-.code-block .kw   { color: var(--yellow); }
-.code-block .fn   { color: #7DFFB3; }
-.code-block .str  { color: #FF9F7E; }
-.code-block .cm   { color: rgba(255,255,255,0.25); font-style: italic; }
-.code-block .ln   { display: inline-block; width: 28px; color: rgba(255,255,255,0.2); text-align: right; margin-right: 16px; font-size: 10px; }
-
-/* ════════════════════════════════════════════════════
-   CALLOUT BOXES
-   .callout        = neutral (black left border)
-   .callout.warn   = warning (--red left border, pink bg)
-   .callout.tip    = tip (--yellow left border, pale yellow bg)
-   ════════════════════════════════════════════════════ */
-.callout          { border-left: 4px solid var(--black); padding: 14px 18px; margin: 16px 0; background: rgba(0,0,0,0.04); -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-.callout.warn     { border-left-color: var(--red);    background: rgba(255,43,43,0.06); }
-.callout.tip      { border-left-color: var(--yellow); background: rgba(232,255,0,0.06); }
-.callout-label    { font-family: var(--mono); font-size: 9px; font-weight: 700; letter-spacing: 0.2em; text-transform: uppercase; margin-bottom: 6px; display: block; }
+/* ── CALLOUT BOXES ──────────────────────────── */
+.callout { border-left: 4px solid var(--black); padding: 12px 16px; margin: 12px 0; background: rgba(0,0,0,0.04); -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+.callout.warn { border-left-color: var(--red);    background: rgba(255,43,43,0.06); }
+.callout.tip  { border-left-color: var(--yellow); background: rgba(232,255,0,0.06); }
+.callout-label { font-family: var(--mono); font-size: 9px; font-weight: 700; letter-spacing: 0.2em; text-transform: uppercase; margin-bottom: 5px; display: block; }
 .callout.warn .callout-label { color: var(--red); }
 .callout.tip  .callout-label { color: #8A9900; }
-.callout p        { font-size: 12.5px; line-height: 1.65; opacity: 0.75; }
+.callout p { font-size: 12px; line-height: 1.65; opacity: 0.75; }
 
-/* ════════════════════════════════════════════════════
-   MAINTENANCE TABLE (Chapter 3)
-   ════════════════════════════════════════════════════ */
-.maint-table { width: 100%; border-collapse: collapse; border: 2px solid var(--black); margin-bottom: 24px; }
-.maint-table th {
-  background: var(--black);
-  color: var(--yellow);
-  font-family: var(--mono);
-  font-size: 9px;
-  letter-spacing: 0.2em;
-  text-transform: uppercase;
-  padding: 10px 16px;
-  text-align: left;
-  border-right: 1px solid rgba(255,255,255,0.1);
-  font-weight: 700;
-  -webkit-print-color-adjust: exact;
-  print-color-adjust: exact;
-}
-.maint-table td { padding: 12px 16px; font-size: 12.5px; border-bottom: 1px solid rgba(0,0,0,0.1); border-right: 1px solid rgba(0,0,0,0.08); vertical-align: top; line-height: 1.5; }
-.maint-table td:last-child  { border-right: none; }
+/* ── CODE BLOCK ─────────────────────────────── */
+.code-block { background: var(--black); padding: 16px 20px; margin: 12px 0 16px; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+.code-block-label { font-family: var(--mono); font-size: 9px; letter-spacing: 0.15em; text-transform: uppercase; color: rgba(255,255,255,0.25); margin-bottom: 10px; display: block; }
+.code-block pre   { font-family: var(--mono); font-size: 10px; color: rgba(255,255,255,0.75); line-height: 1.8; white-space: pre-wrap; word-break: break-word; }
+
+/* ── SEVERITY / RISK ────────────────────────── */
+.severity        { font-family: var(--mono); font-size: 9px; font-weight: 700; letter-spacing: 0.1em; padding: 2px 7px; text-transform: uppercase; white-space: nowrap; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+.severity.critical { background: #7B0000; color: #fff; }
+.severity.high   { background: var(--red);    color: #fff; }
+.severity.medium { background: var(--orange); color: #fff; }
+.severity.med    { background: var(--orange); color: #fff; }
+.severity.low    { border: 1px solid rgba(0,0,0,0.2); color: rgba(0,0,0,0.5); }
+.severity.unknown{ border: 1px solid rgba(0,0,0,0.15); color: rgba(0,0,0,0.4); }
+
+/* ── MAINTENANCE TABLE ──────────────────────── */
+.maint-table { width: 100%; border-collapse: collapse; border: 2px solid var(--black); margin-bottom: 20px; }
+.maint-table th { background: var(--black); color: var(--yellow); font-family: var(--mono); font-size: 9px; letter-spacing: 0.2em; text-transform: uppercase; padding: 9px 14px; text-align: left; border-right: 1px solid rgba(255,255,255,0.1); font-weight: 700; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+.maint-table td { padding: 10px 14px; font-size: 12px; border-bottom: 1px solid rgba(0,0,0,0.1); border-right: 1px solid rgba(0,0,0,0.08); vertical-align: top; line-height: 1.5; }
+.maint-table td:last-child { border-right: none; }
 .maint-table tr:last-child td { border-bottom: none; }
 
-/* Severity badge — rendered from {{priority}} field */
-.severity      { font-family: var(--mono); font-size: 9px; font-weight: 700; letter-spacing: 0.1em; padding: 3px 8px; text-transform: uppercase; white-space: nowrap; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-.severity.high { background: var(--red);    color: #fff; }
-.severity.med  { background: var(--yellow); color: var(--black); }
-.severity.low  { border: 1px solid rgba(0,0,0,0.2); color: rgba(0,0,0,0.5); }
-
-/* ════════════════════════════════════════════════════
-   GLOSSARY (Chapter 4)
-   ════════════════════════════════════════════════════ */
-.glossary-item          { display: grid; grid-template-columns: 200px 1fr; border-bottom: 1px solid rgba(0,0,0,0.1); padding: 16px 0; gap: 24px; }
+/* ── GLOSSARY ───────────────────────────────── */
+.glossary-item { display: grid; grid-template-columns: 180px 1fr; border-bottom: 1px solid rgba(0,0,0,0.1); padding: 12px 0; gap: 20px; }
 .glossary-item:first-child { border-top: 2px solid var(--black); }
-.gl-term                { font-family: var(--mono); font-size: 12px; font-weight: 700; letter-spacing: 0.05em; line-height: 1.4; align-self: start; padding-top: 2px; }
-.gl-term .gl-tag        { display: block; font-size: 9px; letter-spacing: 0.15em; text-transform: uppercase; opacity: 0.4; font-weight: 400; margin-top: 3px; }
-.gl-def                 { font-size: 13px; line-height: 1.7; opacity: 0.7; }
-.gl-def strong          { font-weight: 600; opacity: 1; color: var(--ink); }
+.gl-term { font-family: var(--mono); font-size: 12px; font-weight: 700; letter-spacing: 0.05em; line-height: 1.4; align-self: start; padding-top: 2px; }
+.gl-term .gl-tag { display: block; font-size: 9px; letter-spacing: 0.15em; text-transform: uppercase; opacity: 0.4; font-weight: 400; margin-top: 3px; }
+.gl-def { font-size: 12.5px; line-height: 1.65; opacity: 0.7; }
 
-/* ════════════════════════════════════════════════════
-   LAYOUT UTILITIES
-   ════════════════════════════════════════════════════ */
-.two-col      { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
-.two-col-wide { display: grid; grid-template-columns: 2fr 1fr; gap: 24px; }
-.divider      { border: none; border-top: 2px solid var(--black); margin: 28px 0; }
-.divider.light{ border-top: 1px solid rgba(0,0,0,0.12); margin: 20px 0; }
+/* ── LAYOUT UTILITIES ───────────────────────── */
+.two-col      { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+.two-col-wide { display: grid; grid-template-columns: 2fr 1fr; gap: 20px; }
+.divider      { border: none; border-top: 2px solid var(--black); margin: 20px 0; }
+.divider.light{ border-top: 1px solid rgba(0,0,0,0.12); margin: 14px 0; }
 
-/* ════════════════════════════════════════════════════
-   PRINT OVERRIDES
-   ════════════════════════════════════════════════════ */
+/* ── IDENTITY PLATE ─────────────────────────── */
+.vin-plate { border: 3px solid var(--black); }
+.vin-header { background: var(--black); padding: 12px 20px; display: flex; align-items: center; justify-content: space-between; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+.vin-header-title { font-family: var(--mono); font-size: 11px; font-weight: 700; letter-spacing: 0.2em; text-transform: uppercase; color: var(--yellow); }
+.vin-header-conf  { font-family: var(--mono); font-size: 10px; letter-spacing: 0.15em; text-transform: uppercase; color: rgba(255,255,255,0.45); }
+.vin-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; }
+.vin-cell { padding: 14px 18px; border-right: 1px solid rgba(0,0,0,0.12); border-bottom: 1px solid rgba(0,0,0,0.12); }
+.vin-cell:nth-child(3n) { border-right: none; }
+.vin-label { font-family: var(--mono); font-size: 9px; letter-spacing: 0.2em; text-transform: uppercase; opacity: 0.4; margin-bottom: 5px; display: block; }
+.vin-value { font-family: var(--mono); font-size: 12px; font-weight: 700; line-height: 1.4; word-break: break-word; }
+.vin-value.accent { color: #8A9900; }
+
+/* ── HOOD SECTIONS ──────────────────────────── */
+.hood-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.hood-block { border: 1px solid rgba(0,0,0,0.15); padding: 12px 14px; }
+.hood-label { font-family: var(--mono); font-size: 9px; letter-spacing: 0.2em; text-transform: uppercase; opacity: 0.45; margin-bottom: 6px; display: flex; align-items: center; gap: 6px; }
+.hood-label-dot { width: 8px; height: 8px; background: var(--black); flex-shrink: 0; }
+.hood-text { font-size: 12px; line-height: 1.65; opacity: 0.75; }
+.flow-line { font-family: var(--mono); font-size: 12px; font-weight: 700; letter-spacing: 0.05em; text-align: center; background: var(--black); color: var(--yellow); padding: 10px 18px; margin-top: 14px; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+
+/* ── KEY SYSTEMS ────────────────────────────── */
+.system-card { border: 2px solid var(--black); margin-bottom: 14px; }
+.sc-header { background: var(--black); padding: 9px 16px; display: flex; align-items: center; justify-content: space-between; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+.sc-name { font-family: var(--mono); font-size: 11px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--yellow); }
+.sc-body { padding: 12px 16px; display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.sc-field { padding: 6px 10px; background: rgba(0,0,0,0.03); border-left: 2px solid rgba(0,0,0,0.1); }
+.sc-field-label { font-family: var(--mono); font-size: 9px; letter-spacing: 0.15em; text-transform: uppercase; opacity: 0.4; margin-bottom: 3px; display: block; }
+.sc-field-value { font-size: 11.5px; line-height: 1.5; }
+.sc-what { padding: 8px 16px; font-size: 12.5px; line-height: 1.6; opacity: 0.75; border-bottom: 1px solid rgba(0,0,0,0.08); }
+
+/* ── ZONE MAP ───────────────────────────────── */
+.zone-map { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.zone { border: 2px solid var(--black); }
+.zone-header { padding: 8px 14px; font-family: var(--mono); font-size: 10px; font-weight: 700; letter-spacing: 0.2em; text-transform: uppercase; display: flex; align-items: center; gap: 8px; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+.zone-header .zh-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+.zone.green .zone-header  { background: rgba(0,200,83,0.12); }
+.zone.yellow .zone-header { background: rgba(232,255,0,0.2); }
+.zone.orange .zone-header { background: rgba(255,140,0,0.12); }
+.zone.red    .zone-header { background: rgba(255,43,43,0.1); }
+.zone.green .zone-header .zh-dot  { background: var(--green); }
+.zone.yellow .zone-header .zh-dot { background: #c8b800; }
+.zone.orange .zone-header .zh-dot { background: var(--orange); }
+.zone.red    .zone-header .zh-dot { background: var(--red); }
+.zone-items { padding: 10px 14px; list-style: none; }
+.zone-items li { font-size: 11.5px; line-height: 1.8; padding-left: 10px; position: relative; opacity: 0.8; }
+.zone-items li::before { content: '—'; position: absolute; left: 0; opacity: 0.35; }
+
+/* ── WARNING LIGHTS ─────────────────────────── */
+.warn-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.warn-card { border: 2px solid var(--black); }
+.warn-card-header { background: var(--black); padding: 8px 14px; display: flex; align-items: center; justify-content: space-between; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+.warn-card-symptom { font-family: var(--mono); font-size: 10px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--yellow); }
+.warn-card-body { padding: 10px 14px; }
+.warn-field-label { font-family: var(--mono); font-size: 9px; letter-spacing: 0.15em; text-transform: uppercase; opacity: 0.4; margin-bottom: 2px; display: block; margin-top: 7px; }
+.warn-field-label:first-child { margin-top: 0; }
+.warn-field-value { font-size: 11.5px; line-height: 1.5; opacity: 0.8; }
+
+/* ── COST / ENV CARDS ───────────────────────── */
+.cost-table { width: 100%; border-collapse: collapse; border: 2px solid var(--black); margin-bottom: 16px; }
+.cost-table th { background: var(--black); color: var(--yellow); font-family: var(--mono); font-size: 9px; letter-spacing: 0.2em; text-transform: uppercase; padding: 8px 12px; text-align: left; border-right: 1px solid rgba(255,255,255,0.1); -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+.cost-table td { padding: 9px 12px; font-size: 11.5px; border-bottom: 1px solid rgba(0,0,0,0.1); border-right: 1px solid rgba(0,0,0,0.08); vertical-align: top; line-height: 1.4; }
+.cost-table td:last-child { border-right: none; }
+.cost-table tr:last-child td { border-bottom: none; }
+
+/* ── CHECKLIST ──────────────────────────────── */
+.check-section { margin-bottom: 16px; }
+.check-title { font-family: var(--mono); font-size: 10px; font-weight: 700; letter-spacing: 0.2em; text-transform: uppercase; padding: 6px 12px; background: var(--black); color: var(--yellow); display: inline-block; margin-bottom: 8px; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+.check-list { list-style: none; }
+.check-list li { font-size: 12px; line-height: 1.8; padding-left: 20px; position: relative; opacity: 0.8; }
+.check-list li::before { content: '☐'; position: absolute; left: 0; font-size: 11px; opacity: 0.5; }
+.check-cols { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+
+/* ── RISK REGISTER ──────────────────────────── */
+.risk-table { width: 100%; border-collapse: collapse; border: 2px solid var(--black); }
+.risk-table th { background: var(--black); color: var(--yellow); font-family: var(--mono); font-size: 9px; letter-spacing: 0.2em; text-transform: uppercase; padding: 8px 12px; text-align: left; border-right: 1px solid rgba(255,255,255,0.1); -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+.risk-table td { padding: 10px 12px; font-size: 11.5px; border-bottom: 1px solid rgba(0,0,0,0.1); border-right: 1px solid rgba(0,0,0,0.08); vertical-align: top; line-height: 1.45; }
+.risk-table td:last-child { border-right: none; }
+.risk-table tr:last-child td { border-bottom: none; }
+
+/* ── TROUBLESHOOTING ────────────────────────── */
+.runbook-item { border: 1px solid rgba(0,0,0,0.15); margin-bottom: 12px; }
+.runbook-header { background: rgba(0,0,0,0.06); padding: 8px 14px; font-family: var(--mono); font-size: 10px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; display: flex; justify-content: space-between; }
+.runbook-body { padding: 10px 14px; display: grid; grid-template-columns: 2fr 1fr; gap: 12px; }
+.runbook-steps { list-style: none; }
+.runbook-steps li { font-size: 11.5px; line-height: 1.75; padding-left: 20px; position: relative; opacity: 0.8; }
+.runbook-steps li::before { font-family: var(--mono); font-size: 9px; font-weight: 700; color: rgba(0,0,0,0.4); position: absolute; left: 0; }
+.runbook-escalate-label { font-family: var(--mono); font-size: 9px; letter-spacing: 0.15em; text-transform: uppercase; opacity: 0.4; margin-bottom: 4px; display: block; }
+.runbook-escalate-value { font-size: 11.5px; line-height: 1.55; opacity: 0.75; }
+
+/* ── PROMPT BOX ─────────────────────────────── */
+.prompt-box { background: var(--black); border: 2px solid var(--yellow); padding: 16px 20px; margin-bottom: 16px; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+.prompt-label { font-family: var(--mono); font-size: 9px; font-weight: 700; letter-spacing: 0.2em; text-transform: uppercase; color: var(--yellow); margin-bottom: 10px; display: block; }
+.prompt-text  { font-family: var(--mono); font-size: 10px; color: rgba(255,255,255,0.75); line-height: 1.9; white-space: pre-wrap; word-break: break-word; }
+
+/* ── UNKNOWN ITEMS ──────────────────────────── */
+.unknown-list { border-top: 2px solid var(--black); }
+.unknown-item { display: grid; grid-template-columns: 2fr 1fr 2fr; gap: 16px; border-bottom: 1px solid rgba(0,0,0,0.1); padding: 12px 0; align-items: start; }
+.ui-item { font-family: var(--mono); font-size: 11px; font-weight: 700; }
+.ui-conf { font-family: var(--mono); font-size: 9px; letter-spacing: 0.1em; text-transform: uppercase; padding: 2px 6px; border: 1px solid rgba(0,0,0,0.2); color: rgba(0,0,0,0.5); align-self: start; }
+.ui-why  { font-size: 12px; line-height: 1.55; opacity: 0.7; }
+
+/* ── NEXT ACTIONS ───────────────────────────── */
+.action-list { list-style: none; margin-bottom: 24px; }
+.action-item { display: flex; align-items: flex-start; gap: 20px; border-bottom: 2px solid var(--black); padding: 16px 0; }
+.action-num  { font-family: var(--mono); font-size: 36px; font-weight: 700; color: var(--yellow); line-height: 1; flex-shrink: 0; width: 56px; background: var(--black); text-align: center; padding: 8px 0; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+.action-text { font-size: 16px; font-weight: 600; letter-spacing: -0.01em; align-self: center; }
+
+/* ── PRINT ──────────────────────────────────── */
 @media print {
   @page { size: A4 portrait; margin: 0; }
   body  { background: var(--cream); }
@@ -596,28 +311,16 @@ code {
 </head>
 <body>
 
-<!-- ══════════════════════════════════════════════════
-     PAGE 1 — COVER
-     Data fields: META.*
-     ══════════════════════════════════════════════════ -->
+<!-- PAGE 1 — COVER -->
 <div class="page cover" id="page-cover">
   <div class="cover-stripe"></div>
   <div class="cover-body">
     <div class="cover-eyebrow">CodeReceipt · Owner's Manual</div>
     <div class="cover-manual-label">Generated Owner's Manual</div>
-
-    <!--
-      TEMPLATE NOTE:
-      Split {{META.repo_name_display}} into two spans:
-        - .cover-title-main    = everything before the last word
-        - .cover-title-accent  = last word (or {{META.repo_name_accent}})
-      Example: "Task" + "Flow" for "TaskFlow"
-    -->
     <div class="cover-title">
       <span class="cover-title-main">{{META.repo_name_main}}</span><span class="cover-title-accent">{{META.repo_name_accent}}</span>
     </div>
     <div class="cover-subtitle">{{META.app_type}}</div>
-
     <div class="cover-meta-grid">
       <div class="cover-meta-cell">
         <span class="cmc-label">Repository</span>
@@ -644,7 +347,6 @@ code {
         <span class="cmc-value">{{META.version}}</span>
       </div>
     </div>
-
     <div class="cover-warning">
       <span class="cover-warning-icon">! NOTICE</span>
       <p>This manual was auto-generated by CodeReceipt. It describes the current state of your codebase in plain English. It is not a substitute for reading your code — it is a map. Use it to navigate, not to replace understanding.</p>
@@ -657,10 +359,7 @@ code {
 </div>
 
 
-<!-- ══════════════════════════════════════════════════
-     PAGE 2 — TABLE OF CONTENTS
-     Data fields: TOC[] array
-     ══════════════════════════════════════════════════ -->
+<!-- PAGE 2 — TABLE OF CONTENTS -->
 <div class="page" id="page-toc">
   <div class="inner-page">
     <div class="page-header">
@@ -674,18 +373,12 @@ code {
         <div class="chapter-title-block">
           <div class="chapter-label">// Index</div>
           <h1 class="chapter-title">Table of Contents</h1>
-          <p class="chapter-desc">This manual covers your entire codebase in plain English — what was built, how it works, and how to keep it running.</p>
+          <p class="chapter-desc">This manual covers your codebase in plain English — what was built, how it works, and how to keep it running.</p>
         </div>
       </div>
-
-      <!--
-        TEMPLATE LOOP: {{#TOC}}
-        For each entry, render either .toc-item.chapter or .toc-item.toc-sub
-        based on entry.level === 'chapter' | 'section'
-      -->
       <ul class="toc-list">
         {{#TOC}}
-        <li class="toc-item {{#isChapter}}chapter{{/isChapter}} {{#isSection}}toc-sub{{/isSection}}">
+        <li class="toc-item {{#isChapter}}chapter{{/isChapter}}">
           <span class="toc-num">{{num}}</span>
           <span class="toc-title">{{title}}</span>
           <span class="toc-dots"></span>
@@ -702,15 +395,12 @@ code {
 </div>
 
 
-<!-- ══════════════════════════════════════════════════
-     PAGE 3 — ARCHITECTURE OVERVIEW
-     Data fields: ARCHITECTURE.*
-     ══════════════════════════════════════════════════ -->
-<div class="page" id="page-architecture">
+<!-- PAGE 3 — OWNER'S QUICK START -->
+<div class="page" id="page-quickstart">
   <div class="inner-page">
     <div class="page-header">
       <span class="ph-left">{{META.repo_name_display}} — Owner's Manual</span>
-      <span class="ph-chapter">Chapter 01 — Architecture</span>
+      <span class="ph-chapter">Chapter 01 — Quick Start</span>
       <span class="ph-right">CodeReceipt</span>
     </div>
     <div class="page-content">
@@ -718,94 +408,47 @@ code {
         <div class="chapter-num-block">01</div>
         <div class="chapter-title-block">
           <div class="chapter-label">// Chapter One</div>
-          <h1 class="chapter-title">Architecture Overview</h1>
-          <p class="chapter-desc">What you built, what it runs on, and how the pieces connect. Read this before touching anything.</p>
+          <h1 class="chapter-title">Owner's Quick Start</h1>
+          <p class="chapter-desc">Read this first. What you built, who it's for, and what to know before touching anything.</p>
         </div>
       </div>
-
-      <!-- 1.1 Stack Badges -->
-      <span class="section-label">1.1 / Stack Summary</span>
-      <div class="stack-row">
-        <!--
-          TEMPLATE LOOP: {{#ARCHITECTURE.stack_badges}}
-          Add class .hl when highlight === true
-        -->
-        {{#ARCHITECTURE.stack_badges}}
-        <div class="stack-badge {{#highlight}}hl{{/highlight}}">
-          <span class="dot"></span>{{name}}
-        </div>
-        {{/ARCHITECTURE.stack_badges}}
-      </div>
-
-      <div class="two-col-wide">
-        <!-- 1.2 File Tree -->
+      <div class="two-col">
         <div>
-          <span class="section-label">1.2 / File Tree</span>
-          <div class="file-tree">
-            <div class="ft-header">{{META.repo_name}}/</div>
-            <!--
-              TEMPLATE LOOP: {{#ARCHITECTURE.file_tree}}
-              Render indent as &nbsp;&nbsp; repeated indent times
-              type === 'dir' → use .dir span
-              type === 'file' → use .file span
-              badge present → append .badge span with badge.colour class
-            -->
-            {{#ARCHITECTURE.file_tree}}
-            <div class="ft-line">
-              {{indent_spaces}}<span class="{{type}}">{{name}}</span>
-              {{#badge}}<span class="badge {{colour}}">{{label}}</span>{{/badge}}
-            </div>
-            {{/ARCHITECTURE.file_tree}}
-          </div>
+          <span class="section-label">What This App Does</span>
+          <p class="doc-p">{{QUICK_START.what_it_does}}</p>
+          <span class="section-label" style="margin-top:16px">Who Uses It</span>
+          <p class="doc-p">{{QUICK_START.who_uses_it}}</p>
+          <span class="section-label" style="margin-top:16px">Primary User Flow</span>
+          <p class="doc-p">{{QUICK_START.primary_flow}}</p>
         </div>
-
-        <!-- 1.3 Architecture Diagram -->
         <div>
-          <span class="section-label">1.3 / How It Connects</span>
-          <p class="doc-p" style="font-size:12.5px">Your app has three distinct layers that talk to each other in one direction: the browser asks, the server decides, the database stores.</p>
-          <div class="arch-diagram">
-            <!--
-              TEMPLATE LOOP: {{#ARCHITECTURE.layers}}
-              Interleave with arrow divs between layers (not after last)
-            -->
-            {{#ARCHITECTURE.layers}}
-            <div class="arch-layer">
-              <div class="arch-layer-label">{{label}}</div>
-              <div class="arch-layer-name">{{name}}</div>
-              <ul class="arch-layer-items">
-                {{#items}}<li>{{.}}</li>{{/items}}
-              </ul>
-            </div>
-            {{^isLast}}<div class="arch-layer arrow">→</div>{{/isLast}}
-            {{/ARCHITECTURE.layers}}
+          <span class="section-label">Main Moving Parts</span>
+          <p class="doc-p">{{QUICK_START.main_parts}}</p>
+          <div class="callout warn" style="margin-top:16px">
+            <span class="callout-label">⚠ Read This Before Touching Code</span>
+            <p>{{QUICK_START.before_touching}}</p>
           </div>
-          <div class="callout tip">
-            <span class="callout-label">// Plain English</span>
-            <p>{{ARCHITECTURE.plain_english_summary}}</p>
+          <div class="callout tip" style="margin-top:12px">
+            <span class="callout-label">// Analysis Confidence</span>
+            <p>This manual was generated with <strong>{{META.confidence}}</strong> confidence based on the files scanned. Sections marked "Not confidently detected" should be verified manually.</p>
           </div>
         </div>
       </div>
     </div>
     <div class="page-footer">
       <span class="pf-left">{{META.repo_name_display}} — Owner's Manual · CodeReceipt</span>
-      <span class="pf-num">03</span>
+      <span class="pf-num">{{PAGE_QUICK_START}}</span>
     </div>
   </div>
 </div>
 
 
-<!-- ══════════════════════════════════════════════════
-     PAGE 4+ — FILE BREAKDOWNS (repeating)
-     Data fields: FILES[] array
-     NOTE: Render ~3 file cards per page. If FILES.length > 3,
-     emit additional .page wrappers with the same chrome.
-     Page number increments from 04 upward.
-     ══════════════════════════════════════════════════ -->
-<div class="page" id="page-files">
+<!-- PAGE 4 — PROJECT IDENTITY PLATE -->
+<div class="page" id="page-identity">
   <div class="inner-page">
     <div class="page-header">
       <span class="ph-left">{{META.repo_name_display}} — Owner's Manual</span>
-      <span class="ph-chapter">Chapter 02 — File Breakdowns</span>
+      <span class="ph-chapter">Chapter 02 — Identity Plate</span>
       <span class="ph-right">CodeReceipt</span>
     </div>
     <div class="page-content">
@@ -813,25 +456,224 @@ code {
         <div class="chapter-num-block">02</div>
         <div class="chapter-title-block">
           <div class="chapter-label">// Chapter Two</div>
-          <h1 class="chapter-title">File Breakdowns</h1>
-          <p class="chapter-desc">Every key file in plain English — what it does, what calls it, and what breaks if you mess with it.</p>
+          <h1 class="chapter-title">Project Identity Plate</h1>
+          <p class="chapter-desc">The software equivalent of a vehicle identification plate. Every spec about this project in one view.</p>
         </div>
       </div>
+      <div class="vin-plate">
+        <div class="vin-header">
+          <span class="vin-header-title">{{META.repo_name_display}} · Owner's Manual</span>
+          <span class="vin-header-conf">Confidence: {{META.confidence}}</span>
+        </div>
+        <div class="vin-grid">
+          <div class="vin-cell">
+            <span class="vin-label">Project Name</span>
+            <span class="vin-value">{{META.repo_name_display}}</span>
+          </div>
+          <div class="vin-cell">
+            <span class="vin-label">App Type</span>
+            <span class="vin-value">{{META.app_type}}</span>
+          </div>
+          <div class="vin-cell">
+            <span class="vin-label">Generated</span>
+            <span class="vin-value">{{META.generated_at_display}}</span>
+          </div>
+          <div class="vin-cell">
+            <span class="vin-label">Repository</span>
+            <span class="vin-value">{{META.repo_url}}</span>
+          </div>
+          <div class="vin-cell">
+            <span class="vin-label">Branch</span>
+            <span class="vin-value accent">{{META.branch}}</span>
+          </div>
+          <div class="vin-cell">
+            <span class="vin-label">Files Analysed</span>
+            <span class="vin-value">{{META.file_count}}</span>
+          </div>
+          <div class="vin-cell">
+            <span class="vin-label">Languages</span>
+            <span class="vin-value">{{IDENTITY.languages}}</span>
+          </div>
+          <div class="vin-cell">
+            <span class="vin-label">Frameworks</span>
+            <span class="vin-value">{{IDENTITY.frameworks}}</span>
+          </div>
+          <div class="vin-cell">
+            <span class="vin-label">Database</span>
+            <span class="vin-value">{{IDENTITY.databases}}</span>
+          </div>
+          <div class="vin-cell">
+            <span class="vin-label">Hosting</span>
+            <span class="vin-value">{{IDENTITY.hosting}}</span>
+          </div>
+          <div class="vin-cell">
+            <span class="vin-label">Auth Provider</span>
+            <span class="vin-value">{{IDENTITY.auth_provider}}</span>
+          </div>
+          <div class="vin-cell">
+            <span class="vin-label">External Services</span>
+            <span class="vin-value">{{IDENTITY.external_services}}</span>
+          </div>
+        </div>
+      </div>
+      <div style="margin-top:14px">
+        <span class="section-label">Stack Summary</span>
+        <div class="stack-row">
+          {{#ARCHITECTURE.stack_badges}}
+          <div class="stack-badge {{#highlight}}hl{{/highlight}}">
+            <span class="dot"></span>{{name}}
+          </div>
+          {{/ARCHITECTURE.stack_badges}}
+        </div>
+      </div>
+    </div>
+    <div class="page-footer">
+      <span class="pf-left">{{META.repo_name_display}} — Owner's Manual · CodeReceipt</span>
+      <span class="pf-num">{{PAGE_IDENTITY}}</span>
+    </div>
+  </div>
+</div>
 
-      <!--
-        TEMPLATE LOOP: {{#FILES}} (first 3 items on this page)
-        For each file, render one .file-card
-      -->
+
+<!-- PAGE 5 — UNDER THE HOOD -->
+<div class="page" id="page-hood">
+  <div class="inner-page">
+    <div class="page-header">
+      <span class="ph-left">{{META.repo_name_display}} — Owner's Manual</span>
+      <span class="ph-chapter">Chapter 03 — Under The Hood</span>
+      <span class="ph-right">CodeReceipt</span>
+    </div>
+    <div class="page-content">
+      <div class="chapter-opener">
+        <div class="chapter-num-block">03</div>
+        <div class="chapter-title-block">
+          <div class="chapter-label">// Chapter Three</div>
+          <h1 class="chapter-title">Under The Hood</h1>
+          <p class="chapter-desc">How the app's systems are structured and how they connect. Engine, dashboard, storage, and wiring.</p>
+        </div>
+      </div>
+      <div class="hood-grid">
+        <div class="hood-block">
+          <div class="hood-label"><span class="hood-label-dot"></span>Frontend / Dashboard</div>
+          <p class="hood-text">{{HOOD.frontend_desc}}</p>
+        </div>
+        <div class="hood-block">
+          <div class="hood-label"><span class="hood-label-dot"></span>Backend / Engine</div>
+          <p class="hood-text">{{HOOD.backend_desc}}</p>
+        </div>
+        <div class="hood-block">
+          <div class="hood-label"><span class="hood-label-dot"></span>Database / Storage</div>
+          <p class="hood-text">{{HOOD.database_desc}}</p>
+        </div>
+        <div class="hood-block">
+          <div class="hood-label"><span class="hood-label-dot"></span>Authentication / Keys</div>
+          <p class="hood-text">{{HOOD.auth_desc}}</p>
+        </div>
+        <div class="hood-block">
+          <div class="hood-label"><span class="hood-label-dot"></span>APIs / Wiring</div>
+          <p class="hood-text">{{HOOD.apis_desc}}</p>
+        </div>
+        <div class="hood-block">
+          <div class="hood-label"><span class="hood-label-dot"></span>Hosting / Deployment</div>
+          <p class="hood-text">{{HOOD.hosting_desc}}</p>
+        </div>
+      </div>
+      <div class="flow-line">System Flow: {{HOOD.system_flow}}</div>
+      <div class="callout tip" style="margin-top:12px">
+        <span class="callout-label">// Architecture Summary</span>
+        <p>{{ARCHITECTURE.plain_english_summary}}</p>
+      </div>
+    </div>
+    <div class="page-footer">
+      <span class="pf-left">{{META.repo_name_display}} — Owner's Manual · CodeReceipt</span>
+      <span class="pf-num">{{PAGE_HOOD}}</span>
+    </div>
+  </div>
+</div>
+
+
+<!-- PAGE 6 — KEY SYSTEMS BREAKDOWN -->
+<div class="page" id="page-systems">
+  <div class="inner-page">
+    <div class="page-header">
+      <span class="ph-left">{{META.repo_name_display}} — Owner's Manual</span>
+      <span class="ph-chapter">Chapter 04 — Key Systems</span>
+      <span class="ph-right">CodeReceipt</span>
+    </div>
+    <div class="page-content">
+      <div class="chapter-opener">
+        <div class="chapter-num-block">04</div>
+        <div class="chapter-title-block">
+          <div class="chapter-label">// Chapter Four</div>
+          <h1 class="chapter-title">Key Systems Breakdown</h1>
+          <p class="chapter-desc">The app explained in systems — what each major part does, what depends on it, and what breaks if it fails.</p>
+        </div>
+      </div>
+      {{#KEY_SYSTEMS}}
+      <div class="system-card">
+        <div class="sc-header">
+          <span class="sc-name">{{name}}</span>
+          <span class="severity {{risk_level}}">{{risk_level}}</span>
+        </div>
+        <div class="sc-what">{{what_it_does}}</div>
+        <div class="sc-body">
+          <div class="sc-field">
+            <span class="sc-field-label">Main Files</span>
+            <span class="sc-field-value">{{main_files}}</span>
+          </div>
+          <div class="sc-field">
+            <span class="sc-field-label">Depends On</span>
+            <span class="sc-field-value">{{depends_on}}</span>
+          </div>
+          <div class="sc-field">
+            <span class="sc-field-label">If It Breaks</span>
+            <span class="sc-field-value">{{if_it_breaks}}</span>
+          </div>
+          <div class="sc-field">
+            <span class="sc-field-label">Safe to Edit</span>
+            <span class="sc-field-value">{{safe_edit}}</span>
+          </div>
+        </div>
+      </div>
+      {{/KEY_SYSTEMS}}
+      {{^has_key_systems}}
+      <div class="callout">
+        <span class="callout-label">// Not Detected</span>
+        <p>Key systems could not be confidently identified from the current scan. Review the file breakdown section for individual file context.</p>
+      </div>
+      {{/has_key_systems}}
+    </div>
+    <div class="page-footer">
+      <span class="pf-left">{{META.repo_name_display}} — Owner's Manual · CodeReceipt</span>
+      <span class="pf-num">{{PAGE_SYSTEMS}}</span>
+    </div>
+  </div>
+</div>
+
+
+<!-- PAGE 7+ — FILE BREAKDOWNS (repeating) -->
+<div class="page" id="page-files">
+  <div class="inner-page">
+    <div class="page-header">
+      <span class="ph-left">{{META.repo_name_display}} — Owner's Manual</span>
+      <span class="ph-chapter">Chapter 05 — File Breakdown</span>
+      <span class="ph-right">CodeReceipt</span>
+    </div>
+    <div class="page-content">
+      <div class="chapter-opener">
+        <div class="chapter-num-block">05</div>
+        <div class="chapter-title-block">
+          <div class="chapter-label">// Chapter Five</div>
+          <h1 class="chapter-title">File Breakdown</h1>
+          <p class="chapter-desc">Key files in plain English — what each does, what calls it, and what breaks if you edit it without understanding.</p>
+        </div>
+      </div>
       {{#FILES}}
       <div class="file-card">
         <div class="fc-header">
-          <span class="fc-path">
-            <span class="dir-part">{{dir_part}}</span>{{file_name}}
-          </span>
+          <span class="fc-path"><span class="dir-part">{{dir_part}}</span>{{file_name}}</span>
           <div class="fc-tags">
-            {{#tags}}
-            <span class="fc-tag {{#highlight}}yellow{{/highlight}}">{{label}}</span>
-            {{/tags}}
+            {{#tags}}<span class="fc-tag {{#highlight}}yellow{{/highlight}}">{{label}}</span>{{/tags}}
           </div>
         </div>
         <div class="fc-body">
@@ -846,7 +688,7 @@ code {
               <span class="fcg-value">{{meta.depends_on}}</span>
             </div>
             <div class="fc-grid-cell">
-              <span class="fcg-label">If You Break It</span>
+              <span class="fcg-label">If Broken</span>
               <span class="fcg-value">{{meta.if_broken}}</span>
             </div>
             <div class="fc-grid-cell">
@@ -854,173 +696,488 @@ code {
               <span class="fcg-value">{{meta.safe_to_edit}}</span>
             </div>
           </div>
-
-          <!--
-            CONDITIONAL: {{#code_snippet}} — only render if present
-          -->
-          {{#code_snippet}}
-          <div class="code-block">
-            <span class="code-block-label">{{label}}</span>
-            <pre>{{#lines}}{{{.}}}
-{{/lines}}</pre>
-          </div>
-          {{/code_snippet}}
-
-          <!--
-            CONDITIONAL: {{#callout}} — only render if present
-            callout.type drives the CSS class (.warn or .tip)
-          -->
-          {{#callout}}
-          <div class="callout {{type}}">
-            <span class="callout-label">{{label}}</span>
-            <p>{{content}}</p>
-          </div>
-          {{/callout}}
         </div>
       </div>
       {{/FILES}}
-
     </div>
     <div class="page-footer">
       <span class="pf-left">{{META.repo_name_display}} — Owner's Manual · CodeReceipt</span>
-      <span class="pf-num">04</span><!-- increment per page -->
+      <span class="pf-num">{{FILE_PAGE_NUMBER}}</span>
     </div>
   </div>
 </div>
 
 
-<!-- ══════════════════════════════════════════════════
-     PAGE 5 — MAINTENANCE GUIDE
-     Data fields: MAINTENANCE.*
-     ══════════════════════════════════════════════════ -->
-<div class="page" id="page-maintenance">
+<!-- PAGE — SAFE TO TOUCH MAP -->
+<div class="page" id="page-safe-touch">
   <div class="inner-page">
     <div class="page-header">
       <span class="ph-left">{{META.repo_name_display}} — Owner's Manual</span>
-      <span class="ph-chapter">Chapter 03 — Maintenance Guide</span>
+      <span class="ph-chapter">Chapter 06 — Safe To Touch Map</span>
       <span class="ph-right">CodeReceipt</span>
     </div>
     <div class="page-content">
       <div class="chapter-opener">
-        <div class="chapter-num-block">03</div>
+        <div class="chapter-num-block">06</div>
         <div class="chapter-title-block">
-          <div class="chapter-label">// Chapter Three</div>
-          <h1 class="chapter-title">Maintenance Guide</h1>
-          <p class="chapter-desc">The service schedule for your app. What needs attention, how to extend it safely, and what to leave alone.</p>
+          <div class="chapter-label">// Chapter Six</div>
+          <h1 class="chapter-title">Safe To Touch Map</h1>
+          <p class="chapter-desc">What is safe to edit, what needs care, and what should not be touched without full understanding.</p>
         </div>
       </div>
-
-      <!-- 3.1 How to add a page -->
-      <span class="section-label">3.1 / How to Add a New Page</span>
-      <p class="doc-p">{{MAINTENANCE.how_to_add_page.intro}}</p>
-      <div class="code-block">
-        <span class="code-block-label">{{MAINTENANCE.how_to_add_page.code_label}}</span>
-        <pre>{{#MAINTENANCE.how_to_add_page.code_lines}}{{{.}}}
-{{/MAINTENANCE.how_to_add_page.code_lines}}</pre>
+      <div class="zone-map">
+        <div class="zone green">
+          <div class="zone-header"><span class="zh-dot"></span>Green Zone — Safe for Beginners</div>
+          <ul class="zone-items">
+            {{#SAFE_TOUCH.green}}<li>{{text}}</li>{{/SAFE_TOUCH.green}}
+          </ul>
+        </div>
+        <div class="zone yellow">
+          <div class="zone-header"><span class="zh-dot"></span>Yellow Zone — Edit Carefully</div>
+          <ul class="zone-items">
+            {{#SAFE_TOUCH.yellow}}<li>{{text}}</li>{{/SAFE_TOUCH.yellow}}
+          </ul>
+        </div>
+        <div class="zone orange">
+          <div class="zone-header"><span class="zh-dot"></span>Orange Zone — Needs Context</div>
+          <ul class="zone-items">
+            {{#SAFE_TOUCH.orange}}<li>{{text}}</li>{{/SAFE_TOUCH.orange}}
+          </ul>
+        </div>
+        <div class="zone red">
+          <div class="zone-header"><span class="zh-dot"></span>Red Zone — Do Not Touch Blindly</div>
+          <ul class="zone-items">
+            {{#SAFE_TOUCH.red}}<li>{{text}}</li>{{/SAFE_TOUCH.red}}
+          </ul>
+        </div>
       </div>
-
-      <!-- 3.2 Service schedule table -->
-      <span class="section-label">3.2 / Service Schedule</span>
-      <table class="maint-table">
-        <thead>
-          <tr>
-            <th>Area</th>
-            <th>Issue Detected</th>
-            <th>Action</th>
-            <th>Priority</th>
-          </tr>
-        </thead>
-        <tbody>
-          <!--
-            TEMPLATE LOOP: {{#MAINTENANCE.service_schedule}}
-            priority drives .severity class: high | med | low
-          -->
-          {{#MAINTENANCE.service_schedule}}
-          <tr>
-            <td><code>{{area}}</code></td>
-            <td>{{issue}}</td>
-            <td>{{action}}</td>
-            <td><span class="severity {{priority}}">{{priority}}</span></td>
-          </tr>
-          {{/MAINTENANCE.service_schedule}}
-        </tbody>
-      </table>
-
-      <!-- 3.3 Do Not Touch -->
-      <span class="section-label">3.3 / Do Not Touch</span>
-      <div class="callout warn">
-        <span class="callout-label">⚠ High Risk — Do Not Edit Without Understanding</span>
-        <p>
-          <!--
-            TEMPLATE LOOP: {{#MAINTENANCE.do_not_touch}}
-            Render as inline list: <strong>name</strong> — reason &nbsp;
-          -->
-          {{#MAINTENANCE.do_not_touch}}<strong>{{name}}</strong> — {{reason}} &nbsp; {{/MAINTENANCE.do_not_touch}}
-        </p>
-      </div>
-
-      <div class="callout tip">
-        <span class="callout-label">// Safe to experiment with</span>
-        <p>
-          <!--
-            TEMPLATE LOOP: {{#MAINTENANCE.safe_to_edit}}
-            Render as comma-separated inline list
-          -->
-          {{#MAINTENANCE.safe_to_edit}}<code>{{.}}</code>{{^isLast}}, {{/isLast}}{{/MAINTENANCE.safe_to_edit}}
-        </p>
+      <div class="callout warn" style="margin-top:14px">
+        <span class="callout-label">⚠ Owner's Rule</span>
+        <p>When in doubt, move up a zone. A change that feels like Green may have Orange consequences. Test every change against the main user flow before deploying.</p>
       </div>
     </div>
     <div class="page-footer">
       <span class="pf-left">{{META.repo_name_display}} — Owner's Manual · CodeReceipt</span>
-      <span class="pf-num">05</span><!-- update with actual page number -->
+      <span class="pf-num">{{PAGE_SAFE_TOUCH}}</span>
     </div>
   </div>
 </div>
 
 
-<!-- ══════════════════════════════════════════════════
-     PAGE 6 — CONCEPT GLOSSARY
-     Data fields: GLOSSARY[] array
-     ══════════════════════════════════════════════════ -->
+<!-- PAGE — DASHBOARD WARNING LIGHTS -->
+<div class="page" id="page-warnings">
+  <div class="inner-page">
+    <div class="page-header">
+      <span class="ph-left">{{META.repo_name_display}} — Owner's Manual</span>
+      <span class="ph-chapter">Chapter 07 — Warning Lights</span>
+      <span class="ph-right">CodeReceipt</span>
+    </div>
+    <div class="page-content">
+      <div class="chapter-opener">
+        <div class="chapter-num-block">07</div>
+        <div class="chapter-title-block">
+          <div class="chapter-label">// Chapter Seven</div>
+          <h1 class="chapter-title">Dashboard Warning Lights</h1>
+          <p class="chapter-desc">Common software symptoms — what they mean and where to look first when something breaks.</p>
+        </div>
+      </div>
+      <div class="warn-grid">
+        {{#WARNINGS}}
+        <div class="warn-card">
+          <div class="warn-card-header">
+            <span class="warn-card-symptom">{{symptom}}</span>
+            <span class="severity {{risk}}">{{risk}}</span>
+          </div>
+          <div class="warn-card-body">
+            <span class="warn-field-label">Meaning</span>
+            <span class="warn-field-value">{{meaning}}</span>
+            <span class="warn-field-label">First Check</span>
+            <span class="warn-field-value">{{first_check}}</span>
+          </div>
+        </div>
+        {{/WARNINGS}}
+      </div>
+    </div>
+    <div class="page-footer">
+      <span class="pf-left">{{META.repo_name_display}} — Owner's Manual · CodeReceipt</span>
+      <span class="pf-num">{{PAGE_WARNINGS}}</span>
+    </div>
+  </div>
+</div>
+
+
+<!-- PAGE — RUNNING COSTS & ENV VARS -->
+<div class="page" id="page-costs">
+  <div class="inner-page">
+    <div class="page-header">
+      <span class="ph-left">{{META.repo_name_display}} — Owner's Manual</span>
+      <span class="ph-chapter">Chapter 08 — Running Costs &amp; Environment Variables</span>
+      <span class="ph-right">CodeReceipt</span>
+    </div>
+    <div class="page-content">
+      <div class="chapter-opener">
+        <div class="chapter-num-block">08</div>
+        <div class="chapter-title-block">
+          <div class="chapter-label">// Chapter Eight</div>
+          <h1 class="chapter-title">Running Costs &amp; Env Vars</h1>
+          <p class="chapter-desc">What costs money, what needs monitoring, and what secrets keep the app alive.</p>
+        </div>
+      </div>
+      {{#has_running_costs}}
+      <span class="section-label">8.1 / Running Costs &amp; Consumables</span>
+      <table class="cost-table">
+        <thead>
+          <tr>
+            <th>Service</th><th>Powers</th><th>Monitor</th><th>Risk</th>
+          </tr>
+        </thead>
+        <tbody>
+          {{#RUNNING_COSTS}}
+          <tr>
+            <td><strong>{{service}}</strong></td>
+            <td>{{what_it_powers}}</td>
+            <td>{{what_to_monitor}}</td>
+            <td><span class="severity {{cost_risk}}">{{cost_risk}}</span></td>
+          </tr>
+          {{/RUNNING_COSTS}}
+        </tbody>
+      </table>
+      {{/has_running_costs}}
+      {{^has_running_costs}}
+      <div class="callout" style="margin-bottom:16px">
+        <span class="callout-label">// Running Costs</span>
+        <p>No paid services were confidently detected. Check your deployment provider, database, and any external APIs manually.</p>
+      </div>
+      {{/has_running_costs}}
+      {{#has_env_vars}}
+      <span class="section-label">8.2 / Environment Variables &amp; Keys</span>
+      <table class="cost-table">
+        <thead>
+          <tr><th>Variable</th><th>Purpose</th><th>Type</th><th>If Missing</th><th>Risk</th></tr>
+        </thead>
+        <tbody>
+          {{#ENV_VARS}}
+          <tr>
+            <td><code>{{name}}</code></td>
+            <td>{{purpose}}</td>
+            <td>{{required_label}} · {{secret_label}}</td>
+            <td>{{if_missing}}</td>
+            <td><span class="severity {{risk_level}}">{{risk_level}}</span></td>
+          </tr>
+          {{/ENV_VARS}}
+        </tbody>
+      </table>
+      {{/has_env_vars}}
+      {{^has_env_vars}}
+      <div class="callout">
+        <span class="callout-label">// Environment Variables</span>
+        <p>No environment variable references were confidently detected. This does not mean the app has no secrets — check deployment settings and any .env.example files manually.</p>
+      </div>
+      {{/has_env_vars}}
+    </div>
+    <div class="page-footer">
+      <span class="pf-left">{{META.repo_name_display}} — Owner's Manual · CodeReceipt</span>
+      <span class="pf-num">{{PAGE_COSTS}}</span>
+    </div>
+  </div>
+</div>
+
+
+<!-- PAGE — SERVICE SCHEDULE -->
+<div class="page" id="page-schedule">
+  <div class="inner-page">
+    <div class="page-header">
+      <span class="ph-left">{{META.repo_name_display}} — Owner's Manual</span>
+      <span class="ph-chapter">Chapter 09 — Service Schedule</span>
+      <span class="ph-right">CodeReceipt</span>
+    </div>
+    <div class="page-content">
+      <div class="chapter-opener">
+        <div class="chapter-num-block">09</div>
+        <div class="chapter-title-block">
+          <div class="chapter-label">// Chapter Nine</div>
+          <h1 class="chapter-title">Service Schedule</h1>
+          <p class="chapter-desc">The maintenance schedule for this software. What to check before every deploy, every week, and every month.</p>
+        </div>
+      </div>
+      <div class="check-cols">
+        <div>
+          <div class="check-section">
+            <div class="check-title">Before Every Deployment</div>
+            <ul class="check-list">
+              {{#SERVICE_SCHEDULE.pre_deploy}}<li>{{text}}</li>{{/SERVICE_SCHEDULE.pre_deploy}}
+            </ul>
+          </div>
+          <div class="check-section">
+            <div class="check-title">Weekly</div>
+            <ul class="check-list">
+              {{#SERVICE_SCHEDULE.weekly}}<li>{{text}}</li>{{/SERVICE_SCHEDULE.weekly}}
+            </ul>
+          </div>
+        </div>
+        <div>
+          <div class="check-section">
+            <div class="check-title">Monthly</div>
+            <ul class="check-list">
+              {{#SERVICE_SCHEDULE.monthly}}<li>{{text}}</li>{{/SERVICE_SCHEDULE.monthly}}
+            </ul>
+          </div>
+          <div class="check-section">
+            <div class="check-title">Before Major Changes</div>
+            <ul class="check-list">
+              {{#SERVICE_SCHEDULE.before_changes}}<li>{{text}}</li>{{/SERVICE_SCHEDULE.before_changes}}
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="page-footer">
+      <span class="pf-left">{{META.repo_name_display}} — Owner's Manual · CodeReceipt</span>
+      <span class="pf-num">{{PAGE_SCHEDULE}}</span>
+    </div>
+  </div>
+</div>
+
+
+<!-- PAGE — RISK REGISTER -->
+<div class="page" id="page-risk">
+  <div class="inner-page">
+    <div class="page-header">
+      <span class="ph-left">{{META.repo_name_display}} — Owner's Manual</span>
+      <span class="ph-chapter">Chapter 10 — Risk Register</span>
+      <span class="ph-right">CodeReceipt</span>
+    </div>
+    <div class="page-content">
+      <div class="chapter-opener">
+        <div class="chapter-num-block">10</div>
+        <div class="chapter-title-block">
+          <div class="chapter-label">// Chapter Ten</div>
+          <h1 class="chapter-title">Risk Register</h1>
+          <p class="chapter-desc">Known risks in this project — severity, what it affects, and what to do about it.</p>
+        </div>
+      </div>
+      <table class="risk-table">
+        <thead>
+          <tr>
+            <th>Risk Area</th><th>Severity</th><th>Why It Matters</th><th>Where to Inspect</th><th>Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          {{#RISK_REGISTER}}
+          <tr>
+            <td><strong>{{area}}</strong></td>
+            <td><span class="severity {{severity}}">{{severity}}</span></td>
+            <td>{{why_it_matters}}</td>
+            <td><code style="font-size:10px">{{where_to_inspect}}</code></td>
+            <td>{{suggested_action}}</td>
+          </tr>
+          {{/RISK_REGISTER}}
+        </tbody>
+      </table>
+    </div>
+    <div class="page-footer">
+      <span class="pf-left">{{META.repo_name_display}} — Owner's Manual · CodeReceipt</span>
+      <span class="pf-num">{{PAGE_RISK}}</span>
+    </div>
+  </div>
+</div>
+
+
+<!-- PAGE — TROUBLESHOOTING RUNBOOK -->
+<div class="page" id="page-troubleshoot">
+  <div class="inner-page">
+    <div class="page-header">
+      <span class="ph-left">{{META.repo_name_display}} — Owner's Manual</span>
+      <span class="ph-chapter">Chapter 11 — Troubleshooting</span>
+      <span class="ph-right">CodeReceipt</span>
+    </div>
+    <div class="page-content">
+      <div class="chapter-opener">
+        <div class="chapter-num-block">11</div>
+        <div class="chapter-title-block">
+          <div class="chapter-label">// Chapter Eleven</div>
+          <h1 class="chapter-title">Troubleshooting Runbook</h1>
+          <p class="chapter-desc">What to do when something breaks. Step-by-step first response for the most common failure scenarios.</p>
+        </div>
+      </div>
+      {{#TROUBLESHOOTING}}
+      <div class="runbook-item">
+        <div class="runbook-header">
+          <span>{{scenario}}</span>
+          <span style="font-family:var(--mono);font-size:9px;color:rgba(0,0,0,0.4);letter-spacing:0.15em">RUNBOOK</span>
+        </div>
+        <div class="runbook-body">
+          <div>
+            <ol class="runbook-steps">
+              {{#steps}}<li>{{text}}</li>{{/steps}}
+            </ol>
+          </div>
+          <div>
+            <span class="runbook-escalate-label">When to ask a developer</span>
+            <span class="runbook-escalate-value">{{when_to_escalate}}</span>
+          </div>
+        </div>
+      </div>
+      {{/TROUBLESHOOTING}}
+    </div>
+    <div class="page-footer">
+      <span class="pf-left">{{META.repo_name_display}} — Owner's Manual · CodeReceipt</span>
+      <span class="pf-num">{{PAGE_TROUBLESHOOT}}</span>
+    </div>
+  </div>
+</div>
+
+
+<!-- PAGE — AI AGENT HANDOFF -->
+<div class="page" id="page-ai-handoff">
+  <div class="inner-page">
+    <div class="page-header">
+      <span class="ph-left">{{META.repo_name_display}} — Owner's Manual</span>
+      <span class="ph-chapter">Chapter 12 — AI Agent Handoff</span>
+      <span class="ph-right">CodeReceipt</span>
+    </div>
+    <div class="page-content">
+      <div class="chapter-opener">
+        <div class="chapter-num-block">12</div>
+        <div class="chapter-title-block">
+          <div class="chapter-label">// Chapter Twelve</div>
+          <h1 class="chapter-title">AI Agent Handoff</h1>
+          <p class="chapter-desc">Copy-ready prompts for continuing to build safely with AI coding tools. Paste into Cursor, Claude, Codex, or any AI agent.</p>
+        </div>
+      </div>
+      <div class="prompt-box">
+        <span class="prompt-label">▶ Safe Feature / New Work Prompt</span>
+        <div class="prompt-text">{{AI_HANDOFF.safe_feature_prompt}}</div>
+      </div>
+      <div class="prompt-box">
+        <span class="prompt-label">▶ Bug Fix Prompt</span>
+        <div class="prompt-text">{{AI_HANDOFF.bug_fix_prompt}}</div>
+      </div>
+      <div class="callout tip">
+        <span class="callout-label">// Project Context</span>
+        <p><strong>Project:</strong> {{AI_HANDOFF.project_summary}}<br>
+        <strong>Stack:</strong> {{AI_HANDOFF.stack_label}}<br>
+        <strong>Key systems:</strong> {{AI_HANDOFF.key_systems_text}}</p>
+      </div>
+    </div>
+    <div class="page-footer">
+      <span class="pf-left">{{META.repo_name_display}} — Owner's Manual · CodeReceipt</span>
+      <span class="pf-num">{{PAGE_AI_HANDOFF}}</span>
+    </div>
+  </div>
+</div>
+
+
+<!-- PAGE — KNOWN UNKNOWNS -->
+<div class="page" id="page-unknowns">
+  <div class="inner-page">
+    <div class="page-header">
+      <span class="ph-left">{{META.repo_name_display}} — Owner's Manual</span>
+      <span class="ph-chapter">Chapter 13 — Known Unknowns</span>
+      <span class="ph-right">CodeReceipt</span>
+    </div>
+    <div class="page-content">
+      <div class="chapter-opener">
+        <div class="chapter-num-block">13</div>
+        <div class="chapter-title-block">
+          <div class="chapter-label">// Chapter Thirteen</div>
+          <h1 class="chapter-title">Known Unknowns</h1>
+          <p class="chapter-desc">What the scan could not confirm. Honest inspection notes — not errors, just gaps to verify manually.</p>
+        </div>
+      </div>
+      <div class="unknown-list">
+        <div style="display:grid;grid-template-columns:2fr 1fr 2fr;gap:16px;padding:8px 0;border-bottom:2px solid var(--black)">
+          <span style="font-family:var(--mono);font-size:9px;letter-spacing:0.2em;text-transform:uppercase;opacity:0.4">Item</span>
+          <span style="font-family:var(--mono);font-size:9px;letter-spacing:0.2em;text-transform:uppercase;opacity:0.4">Confidence</span>
+          <span style="font-family:var(--mono);font-size:9px;letter-spacing:0.2em;text-transform:uppercase;opacity:0.4">Why It Matters</span>
+        </div>
+        {{#KNOWN_UNKNOWNS}}
+        <div class="unknown-item">
+          <span class="ui-item">{{item}}</span>
+          <span class="ui-conf">{{confidence}}</span>
+          <span class="ui-why">{{why_it_matters}}</span>
+        </div>
+        {{/KNOWN_UNKNOWNS}}
+      </div>
+      <div class="callout" style="margin-top:16px">
+        <span class="callout-label">// Note</span>
+        <p>This manual analyses source code only. Runtime behaviour, production configuration, external service accounts, and real environment values are outside its scope. Verify these items in your deployment settings.</p>
+      </div>
+    </div>
+    <div class="page-footer">
+      <span class="pf-left">{{META.repo_name_display}} — Owner's Manual · CodeReceipt</span>
+      <span class="pf-num">{{PAGE_UNKNOWNS}}</span>
+    </div>
+  </div>
+</div>
+
+
+<!-- PAGE — CONCEPT GLOSSARY -->
 <div class="page" id="page-glossary">
   <div class="inner-page">
     <div class="page-header">
       <span class="ph-left">{{META.repo_name_display}} — Owner's Manual</span>
-      <span class="ph-chapter">Chapter 04 — Concept Glossary</span>
+      <span class="ph-chapter">Chapter 14 — Concept Glossary</span>
       <span class="ph-right">CodeReceipt</span>
     </div>
     <div class="page-content">
       <div class="chapter-opener">
-        <div class="chapter-num-block">04</div>
+        <div class="chapter-num-block">14</div>
         <div class="chapter-title-block">
-          <div class="chapter-label">// Chapter Four</div>
+          <div class="chapter-label">// Chapter Fourteen</div>
           <h1 class="chapter-title">Concept Glossary</h1>
-          <p class="chapter-desc">The terms and patterns your AI used — explained plainly so you actually understand what you're maintaining.</p>
+          <p class="chapter-desc">The terms and patterns used in this codebase — explained in plain English so you understand what you own.</p>
         </div>
       </div>
-
-      <span class="section-label">4.1 / Terms Used in This Codebase</span>
-
-      <!--
-        TEMPLATE LOOP: {{#GLOSSARY}}
-        definition may contain raw HTML (<strong>, <code>) — render unescaped {{{definition}}}
-      -->
       {{#GLOSSARY}}
       <div class="glossary-item">
         <div class="gl-term">{{term}}<span class="gl-tag">{{tag}}</span></div>
         <div class="gl-def">{{{definition}}}</div>
       </div>
       {{/GLOSSARY}}
+    </div>
+    <div class="page-footer">
+      <span class="pf-left">{{META.repo_name_display}} — Owner's Manual · CodeReceipt</span>
+      <span class="pf-num">{{PAGE_GLOSSARY}}</span>
+    </div>
+  </div>
+</div>
 
-      <hr class="divider" style="margin-top:24px">
-      <div style="display:flex; justify-content:space-between; padding-top:8px">
-        <span style="font-family:var(--mono); font-size:9px; letter-spacing:0.15em; text-transform:uppercase; opacity:0.35;">Generated by CodeReceipt · codereceipt.io</span>
-        <span style="font-family:var(--mono); font-size:9px; letter-spacing:0.15em; text-transform:uppercase; opacity:0.35;">End of Manual · {{META.repo_name_display}} {{META.version}}</span>
+
+<!-- PAGE — NEXT 5 ACTIONS -->
+<div class="page" id="page-actions">
+  <div class="inner-page">
+    <div class="page-header">
+      <span class="ph-left">{{META.repo_name_display}} — Owner's Manual</span>
+      <span class="ph-chapter">Chapter 15 — Next 5 Actions</span>
+      <span class="ph-right">CodeReceipt</span>
+    </div>
+    <div class="page-content">
+      <div class="chapter-opener">
+        <div class="chapter-num-block">15</div>
+        <div class="chapter-title-block">
+          <div class="chapter-label">// Chapter Fifteen</div>
+          <h1 class="chapter-title">Next 5 Actions</h1>
+          <p class="chapter-desc">Five practical next steps based on this scan. Do these before you ship another change.</p>
+        </div>
+      </div>
+      <ol class="action-list">
+        {{#NEXT_ACTIONS}}
+        <li class="action-item">
+          <div class="action-num">{{num}}</div>
+          <div class="action-text">{{action}}</div>
+        </li>
+        {{/NEXT_ACTIONS}}
+      </ol>
+      <hr class="divider" style="margin-top:16px">
+      <div style="display:flex;justify-content:space-between;padding-top:10px;align-items:center">
+        <span style="font-family:var(--mono);font-size:11px;font-weight:700;letter-spacing:0.05em;opacity:0.5">Own the project before you ship the next change.</span>
+        <span style="font-family:var(--mono);font-size:9px;letter-spacing:0.15em;text-transform:uppercase;opacity:0.3">CodeReceipt · {{META.repo_name_display}} · v{{META.version}}</span>
       </div>
     </div>
     <div class="page-footer">
       <span class="pf-left">{{META.repo_name_display}} — Owner's Manual · CodeReceipt</span>
-      <span class="pf-num">06</span><!-- update with actual page number -->
+      <span class="pf-num">{{PAGE_ACTIONS}}</span>
     </div>
   </div>
 </div>
