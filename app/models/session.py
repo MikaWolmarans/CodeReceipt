@@ -39,10 +39,21 @@ class SessionDocument(BaseModel):
     pdf_delivered: bool = False
     error: str | None = None
     notify_email: str | None = None
+    # Monetisation
+    tier: Literal['free', 'owner_manual', 'workshop'] = 'free'
+    paid: bool = False
+    paid_at: datetime | None = None
+    stripe_checkout_id: str | None = None
+    payment_email: str | None = None
+    # Cost control
+    repo_hash: str | None = None              # SHA256 for cache lookup
+    chunk_summaries_text: str | None = None   # Stored for paid synthesis upgrade
 
 
 class AnalyseResponse(BaseModel):
-    session_id: str
+    session_id: str | None = None
+    requires_upgrade: bool = False
+    upgrade_reason: str | None = None
 
 
 class StatusResponse(BaseModel):

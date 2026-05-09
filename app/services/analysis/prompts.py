@@ -1,6 +1,33 @@
 from app.models.analysis import RepoFile
 
 
+def free_synthesis_prompt(chunk_outputs: list[str], stack: dict, options: dict) -> str:
+    """Lightweight synthesis for the free tier — returns only Quick Start + Identity fields."""
+    return (
+        'You are producing a structured JSON object for a software owner\'s summary. '
+        'Return ONLY a valid JSON object — no markdown fences, no preamble, no explanation. '
+        'Write in plain English for a non-technical founder. '
+        'Do NOT use first-person language, markdown, or bullet points inside values. '
+        'When unsure, use "Not confidently detected." — never guess.\n\n'
+        f'Detected stack: {stack}. Options: {options}.\n\n'
+        'Return ONLY these four keys:\n'
+        '{\n'
+        '  "what_you_built": "1-2 sentence description of the project",\n'
+        '  "app_type": "short label e.g. Web Application, API Service, CLI Tool",\n'
+        '  "analysis_confidence": "high|medium|low",\n'
+        '  "owner_quick_start": {\n'
+        '    "what_it_does": "1-2 sentences on what the app does",\n'
+        '    "who_uses_it": "1 sentence on the intended user",\n'
+        '    "primary_flow": "1-2 sentences on the main user journey",\n'
+        '    "main_parts": "1-2 sentences on the main moving parts",\n'
+        '    "before_touching": "1-2 sentences on what to know before editing"\n'
+        '  }\n'
+        '}\n\n'
+        'Chunk analyses:\n'
+        + '\n\n'.join(chunk_outputs)
+    )
+
+
 def pass_one_prompt(files: list[RepoFile]) -> str:
     rendered = []
     for f in files:

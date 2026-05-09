@@ -160,12 +160,16 @@ class LLMClient:
                 key_preview,
             )
 
-    def new_session(self) -> LLMSession:
-        """Return a fresh LLMSession with its own call counter."""
+    def new_session(self, model_override: str | None = None) -> LLMSession:
+        """Return a fresh LLMSession with its own call counter.
+
+        Pass *model_override* to use a different model (e.g. a stronger paid-tier model)
+        while reusing the same authenticated OpenAI-compatible client.
+        """
         s = self._settings
         return LLMSession(
             client=self._openai_client,
-            model=s.llm_model,
+            model=model_override or s.llm_model,
             max_tokens_per_request=s.llm_max_tokens_per_request,
             max_requests=s.llm_max_requests_per_analysis,
         )
