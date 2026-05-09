@@ -61,10 +61,15 @@ async def get_preview(session_id: str) -> PreviewResponse:
     chunks = analysis.get('chunks', []) or []
     file_count = len(chunks)
 
-    # Quick start preview
+    # Quick start preview — coerce whatever the LLM returned into a plain string
     quick_start_raw = synthesis.get('owner_quick_start', '') or ''
     if isinstance(quick_start_raw, list):
         quick_start_raw = ' '.join(str(s) for s in quick_start_raw)
+    elif isinstance(quick_start_raw, dict):
+        # e.g. {"steps": [...]} — flatten values into a single string
+        quick_start_raw = ' '.join(str(v) for v in quick_start_raw.values())
+    else:
+        quick_start_raw = str(quick_start_raw)
     quick_start_preview = quick_start_raw[:_QUICK_START_PREVIEW_CHARS]
     if len(quick_start_raw) > _QUICK_START_PREVIEW_CHARS:
         quick_start_preview += '…'
