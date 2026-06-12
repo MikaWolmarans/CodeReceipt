@@ -1361,8 +1361,10 @@ function App() {
   const [sessionId, setSessionId] = useState(returnSessionId || null);
   const [error, setError] = useState(null);
 
-  // Views: 'form' | 'processing' | 'teaser' | 'upgrade' | 'payment_pending' | 'paid'
-  const [view, setView] = useState(returnSessionId ? 'payment_pending' : 'form');
+  // Views: 'form' | 'processing' | 'teaser' | 'upgrade' | 'payment_pending' | 'resume' | 'paid'
+  const [view, setView] = useState(
+    returnSessionId ? (paymentStatus === 'success' ? 'payment_pending' : 'resume') : 'form'
+  );
   const [preview, setPreview] = useState(null);
   const [upgradeReason, setUpgradeReason] = useState('');
   const [checkoutLoading, setCheckoutLoading] = useState(false);
@@ -1397,6 +1399,26 @@ function App() {
       }, 3000);
       return () => clearInterval(poll);
     }
+  }, []);
+
+  // ── Resume from email link: bare ?session_id= with no payment=success ───────
+  useEffect(() => {
+    if (view !== 'resume' || !returnSessionId) return;
+    (async () => {
+      try {
+        const r = await fetch(`/preview/${returnSessionId}`);
+        if (!r.ok) {
+          setError('This scan has expired. Free scan results are kept for 2 hours — run a new scan below.');
+          setView('form');
+          return;
+        }
+        const p = await r.json();
+        setPreview(p);
+        setView(p.paid ? 'paid' : (p.status === 'complete' ? 'teaser' : 'form'));
+      } catch (e) {
+        setView('form');
+      }
+    })();
   }, []);
 
   // ── Fetch preview after analysis completes ──────────────────────────────────
@@ -1698,6 +1720,12 @@ function App() {
             <div className="proc-bar-wrap" style={{ marginTop: 32, maxWidth: 300 }}>
               <div className="proc-bar" style={{ width: '60%', animation: 'none' }} />
             </div>
+          </div>
+        )}
+
+        {view === 'resume' && (
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', color: '#F2EDE3' }}>
+            <p style={{ fontFamily: 'var(--mono)', fontSize: 13, letterSpacing: '0.1em', textTransform: 'uppercase' }}>Loading your scan...</p>
           </div>
         )}
 

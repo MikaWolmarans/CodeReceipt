@@ -27,9 +27,9 @@ async def send_manual_ready_email(to_email: str, session_id: str, repo_name: str
         logger.warning('RESEND_API_KEY not set — skipping email to %s', to_email)
         return
 
-    download_url = f"{settings.frontend_url}/export/{session_id}"
+    download_url = f"{settings.frontend_url}/?session_id={session_id}"
     repo_main, repo_accent = _split_repo_name(repo_name)
-    ticker = ' + YOUR MANUAL IS READY' * 6
+    ticker = ' + YOUR FREE SCAN IS READY' * 6
 
     payload = {
         "from": settings.from_email,
@@ -75,19 +75,19 @@ async def send_manual_ready_email(to_email: str, session_id: str, repo_name: str
       <span class="ticker-text">{ticker}</span>
     </div>
     <div class="body">
-      <p class="eyebrow">// CodeReceipt &middot; Owner's Manual</p>
-      <p class="badge"><span class="badge-icon"></span> Manual Complete</p>
+      <p class="eyebrow">// CodeReceipt &middot; Free Scan</p>
+      <p class="badge"><span class="badge-icon"></span> Free Scan Complete</p>
       <div class="title">
         <span class="title-main">{repo_main}</span>
         <span class="title-accent">{repo_accent}</span>
       </div>
-      <p class="subtitle">Owner's Manual</p>
+      <p class="subtitle">Free Scan Results</p>
       <div class="cta-wrap">
-        <a href="{download_url}" class="cta">&darr; Download Your Manual</a>
+        <a href="{download_url}" class="cta">&rarr; View Your Free Scan</a>
       </div>
       <div class="footer">
-        Link expires in 24 hours.<br>
-        You're receiving this because you requested a manual at codereceipt.site.
+        Results available for 2 hours after your scan.<br>
+        You're receiving this because you requested a scan at codereceipt.site.
       </div>
     </div>
   </div>
