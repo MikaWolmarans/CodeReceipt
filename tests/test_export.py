@@ -1,4 +1,4 @@
-"""Tests for GET /export/{session_id} — payment gate."""
+"""Tests for GET /export/{session_id} — payment gate and pdf_store fallback."""
 import pytest
 from app.services.session import session_service
 
@@ -37,3 +37,22 @@ async def test_export_paid_200(api, mock_db):
     assert r.status_code == 200
     assert r.headers['content-type'] == 'application/pdf'
     assert r.content[:4] == b'%PDF'
+
+
+@pytest.mark.asyncio
+async def test_export_expired_paid_session_falls_back_to_pdf_store(api, mock_db):
+    # No session doc (simulates 2h TTL expiry), but PDF stored (30-day TTL)
+    await session_service.store_pdf('gone1', b'%PDF-archived', 'my-repo')
+
+    r = await api.get('/export/gone1')
+    assert r.status_code == 200
+    assert r.headers['content-type'] == 'application/pdf'
+    assert r.content == b'%PDF-archived'
+    assert 'my-repo-owners-manual.pdf' in r.headers.get('content-disposition', '')
+
+
+@pytest.mark.asyncio
+async def test_export_expired_unpaid_session_404(api, mock_db):
+    # No session doc, no pdf_store doc — proves fallback cannot bypass 402 gate
+    r = await api.get('/export/gone2')
+    assert r.status_code == 404

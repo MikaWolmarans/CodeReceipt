@@ -116,7 +116,7 @@ async def send_paid_manual_email(
         logger.warning('RESEND_API_KEY not set — skipping paid email to %s', to_email)
         return
 
-    download_url = f"{settings.frontend_url}?payment=success&session_id={session_id}"
+    download_url = f"{settings.frontend_url}/export/{session_id}"
     repo_main, repo_accent = _split_repo_name(repo_name)
     ticker = " + OWNER'S MANUAL DELIVERED" * 6
     pdf_b64 = base64.b64encode(pdf_bytes).decode('ascii')

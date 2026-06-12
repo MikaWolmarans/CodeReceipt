@@ -12,11 +12,27 @@ logger = logging.getLogger(__name__)
 router = APIRouter()
 
 
+def _pdf_response(pdf_bytes: bytes, repo_name: str) -> StreamingResponse:
+    safe_name = repo_name.replace('"', '').replace('/', '-')
+    return StreamingResponse(
+        BytesIO(pdf_bytes),
+        media_type='application/pdf',
+        headers={'Content-Disposition': f'attachment; filename="{safe_name}-owners-manual.pdf"'},
+    )
+
+
 @router.get('/export/{session_id}')
 async def export_pdf(session_id: str):
     session = await session_service.get_session(session_id)
+
     if not session:
-        raise HTTPException(status_code=404, detail='Session not found.')
+        # Session expired (2h TTL) but paid PDFs live 30 days in pdf_store.
+        # Only paid fulfillment ever writes to pdf_store, so a hit implies payment.
+        stored = await session_service.pdf_store.find_one({'_id': session_id})
+        if stored:
+            return _pdf_response(bytes(stored['pdf']), stored.get('repo_name', 'repository'))
+        raise HTTPException(status_code=404, detail='Session not found or expired.')
+
     if session.get('status') != 'complete':
         raise HTTPException(status_code=409, detail='Analysis is not complete yet.')
 
@@ -48,10 +64,4 @@ async def export_pdf(session_id: str):
             raise HTTPException(status_code=500, detail=f'Unexpected error: {traceback.format_exc()}')
 
     await session_service.update_session(session_id, pdf_delivered=True)
-
-    safe_name = repo_name.replace('"', '').replace('/', '-')
-    return StreamingResponse(
-        BytesIO(pdf_bytes),
-        media_type='application/pdf',
-        headers={'Content-Disposition': f'attachment; filename="{safe_name}-owners-manual.pdf"'},
-    )
+    return _pdf_response(pdf_bytes, repo_name)
