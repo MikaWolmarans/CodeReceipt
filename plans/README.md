@@ -16,7 +16,7 @@ only `python3 -m compileall -q app`.
 | 001 | Establish pytest verification baseline | P1 | M | — | DONE |
 | 002 | Paid 30-day download survives session TTL | P1 | S | 001 | DONE |
 | 003 | Fix free-scan email CTA (402 dead-end) | P1 | S | 001 (002 first: same file) | DONE |
-| 004 | Idempotent, fast Stripe webhook fulfillment | P1 | M | 001, 003 | TODO |
+| 004 | Idempotent, fast Stripe webhook fulfillment | P1 | M | 001, 003 | DONE |
 | 005 | Implement the real paid analysis pipeline | P2 | L | 001, 004 | TODO |
 
 Status values: TODO | IN PROGRESS | DONE | BLOCKED (with one-line reason) | REJECTED (with one-line rationale)

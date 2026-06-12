@@ -47,6 +47,10 @@ class SessionDocument(BaseModel):
     paid_at: datetime | None = None
     stripe_checkout_id: str | None = None
     payment_email: str | None = None
+    # Fulfillment state machine (post-payment)
+    fulfillment_status: Literal['none', 'processing', 'complete', 'failed'] = 'none'
+    fulfillment_started_at: datetime | None = None
+    fulfillment_error: str | None = None
     # Cost control
     repo_hash: str | None = None              # SHA256 for cache lookup
     chunk_summaries_text: str | None = None   # Stored for paid synthesis upgrade

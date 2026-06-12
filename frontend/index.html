@@ -1379,20 +1379,21 @@ function App() {
     inline_code_notes: options.linenum,
   };
 
-  // ── Payment return: poll until paid ────────────────────────────────────────
+  // ── Payment return: poll until pdf_ready (or timeout after ~2 min) ──────────
   useEffect(() => {
     if (paymentStatus === 'success' && returnSessionId) {
       setView('payment_pending');
+      let pollCount = 0;
       const poll = setInterval(async () => {
         try {
           const r = await fetch(`/preview/${returnSessionId}`);
           if (!r.ok) return;
           const p = await r.json();
           setPreview(p);
-          if (p.paid) {
+          pollCount++;
+          if (p.paid && (p.pdf_ready || pollCount >= 40)) {
             clearInterval(poll);
             setView('paid');
-            // Clean URL
             window.history.replaceState({}, '', '/');
           }
         } catch(e) {}

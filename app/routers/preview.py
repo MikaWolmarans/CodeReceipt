@@ -33,6 +33,7 @@ class PreviewResponse(BaseModel):
     section_counts: SectionCounts
     quick_start_preview: str
     paid: bool
+    pdf_ready: bool
     payment_email: str | None
 
 
@@ -97,6 +98,10 @@ async def get_preview(session_id: str) -> PreviewResponse:
         ),
         quick_start_preview=quick_start_preview,
         paid=bool(session.get('paid', False)),
+        pdf_ready=(
+            session.get('fulfillment_status') == 'complete'
+            or bool(session.get('pdf_delivered'))
+        ),
         payment_email=session.get('payment_email'),
     )
 

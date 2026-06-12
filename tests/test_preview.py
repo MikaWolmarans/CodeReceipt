@@ -47,6 +47,31 @@ async def test_preview_quick_start_coercion(api, mock_db, quick_start, label):
 
 
 @pytest.mark.asyncio
+async def test_preview_pdf_ready_on_complete_fulfillment(api, mock_db):
+    doc = _session('hello')
+    doc['_id'] = 'pr-complete'
+    doc['paid'] = True
+    doc['fulfillment_status'] = 'complete'
+    await mock_db['sessions'].insert_one(doc)
+
+    r = await api.get('/preview/pr-complete')
+    assert r.status_code == 200
+    assert r.json()['pdf_ready'] is True
+
+
+@pytest.mark.asyncio
+async def test_preview_pdf_not_ready_without_fulfillment(api, mock_db):
+    doc = _session('hello')
+    doc['_id'] = 'pr-pending'
+    doc['paid'] = True
+    await mock_db['sessions'].insert_one(doc)
+
+    r = await api.get('/preview/pr-pending')
+    assert r.status_code == 200
+    assert r.json()['pdf_ready'] is False
+
+
+@pytest.mark.asyncio
 async def test_preview_section_counts(api, mock_db):
     doc = _session('hello', risk_register=['r1', 'r2'], warning_lights=['w1'])
     doc['_id'] = 'sc-sess'
