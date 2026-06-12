@@ -138,25 +138,40 @@ async def analyse(
         )
 
     # ── Free tier size gate ──────────────────────────────────────────────────
+    repo_hash = _compute_repo_hash(url, commit_sha, zip_data)
     free_max_bytes = settings.free_tier_max_mb * 1024 * 1024
     if total_bytes > free_max_bytes:
         size_mb = round(total_bytes / (1024 * 1024), 1)
+        session = SessionDocument(
+            source_type=source_type,
+            source_meta=source_meta,
+            options=options,
+            notify_email=email,
+            tier='owner_manual',
+            status='awaiting_payment',
+            repo_hash=repo_hash,
+            total_file_count=len(files),
+        )
+        new_session_id = await session_service.create_session(session)
+        if zip_data is not None:
+            await session_service.store_upload(new_session_id, zip_data)
+            await session_service.update_session(new_session_id, upload_stored=True)
         return AnalyseResponse(
-            session_id=None,
+            session_id=new_session_id,
             requires_upgrade=True,
             upgrade_reason=(
-                f'This repository is {size_mb} MB. '
-                f'Repositories over {settings.free_tier_max_mb} MB require an Owner\'s Manual plan.'
+                f'This repository is {size_mb} MB — over the {settings.free_tier_max_mb} MB free scan limit. '
+                f'Get the Owner\'s Manual to run the full analysis.'
             ),
         )
 
     # ── Free tier file count gate ────────────────────────────────────────────
-    if len(files) > settings.free_tier_max_files:
-        # Keep only the most important files for the free tier
+    total_file_count = len(files)
+    truncated = total_file_count > settings.free_tier_max_files
+    if truncated:
         files = files[: settings.free_tier_max_files]
 
     # ── Cache check ──────────────────────────────────────────────────────────
-    repo_hash = _compute_repo_hash(url, commit_sha, zip_data)
     cached = await session_service.find_cached_session(repo_hash, 'free')
     if cached:
         logger.info('Returning cached free session %s for hash %s', cached['_id'], repo_hash[:8])
@@ -177,8 +192,14 @@ async def analyse(
         notify_email=email,
         tier='free',
         repo_hash=repo_hash,
+        truncated=truncated,
+        total_file_count=total_file_count,
     )
     new_session_id = await session_service.create_session(session)
+
+    if truncated and zip_data is not None:
+        await session_service.store_upload(new_session_id, zip_data)
+        await session_service.update_session(new_session_id, upload_stored=True)
 
     background_tasks.add_task(_run_analysis, new_session_id, files, repo_name)
     return AnalyseResponse(session_id=new_session_id)

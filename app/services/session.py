@@ -3,7 +3,7 @@ from __future__ import annotations
 from datetime import datetime, timezone
 
 from bson import Binary
-from motor.motor_asyncio import AsyncIOMotorClient
+from motor.motor_asyncio import AsyncIOMotorClient, AsyncIOMotorGridFSBucket
 from pymongo import ReturnDocument
 
 from app.config import get_settings
@@ -22,6 +22,7 @@ class SessionService:
         self.counters = self.db['daily_counters']
         self.pdf_store = self.db['pdf_store']
         self.customers = self.db['customers']
+        self.uploads = AsyncIOMotorGridFSBucket(self.db, bucket_name='upload_store')
         self.settings = settings
 
     async def ensure_indexes(self) -> None:
@@ -104,6 +105,24 @@ class SessionService:
     async def get_pdf(self, session_id: str) -> bytes | None:
         doc = await self.pdf_store.find_one({'_id': session_id})
         return bytes(doc['pdf']) if doc else None
+
+    # ── Source upload storage (ZIPs pending paid analysis) ──────────────────
+
+    async def store_upload(self, session_id: str, data: bytes) -> None:
+        await self.delete_upload(session_id)  # idempotent re-store
+        await self.uploads.upload_from_stream(session_id, data)
+
+    async def get_upload(self, session_id: str) -> bytes | None:
+        try:
+            stream = await self.uploads.open_download_stream_by_name(session_id)
+        except Exception:
+            return None
+        return await stream.read()
+
+    async def delete_upload(self, session_id: str) -> None:
+        cursor = self.uploads.find({'filename': session_id})
+        async for f in cursor:
+            await self.uploads.delete(f._id)
 
     # ── Customer tracking ────────────────────────────────────────────────
 

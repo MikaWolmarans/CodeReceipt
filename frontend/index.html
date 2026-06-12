@@ -1458,6 +1458,7 @@ function App() {
       // Large repo upgrade gate
       if (data.requires_upgrade) {
         setUpgradeReason(data.upgrade_reason || 'This repository requires an Owner\'s Manual plan.');
+        if (data.session_id) setSessionId(data.session_id);
         setView('upgrade');
         return;
       }
@@ -1692,9 +1693,11 @@ function App() {
               The Owner's Manual plan supports up to 25 MB / 100 files — and uses a deeper analysis pipeline.
             </p>
             <button className="submit-btn" style={{ maxWidth: 320, boxShadow: '6px 6px 0 rgba(232,255,0,0.25)', marginBottom: 16 }}
-              onClick={() => window.location.href = '#pricing'}>
-              See Pricing →
+              onClick={sessionId ? handleCheckout : () => window.location.href = '#pricing'}
+              disabled={checkoutLoading}>
+              {sessionId ? (checkoutLoading ? 'Opening Checkout...' : 'Get Owner\'s Manual — $9 →') : 'See Pricing →'}
             </button>
+            {checkoutError && <p style={{ fontFamily: 'var(--mono)', fontSize: 11, color: '#FF2B2B', marginBottom: 12 }}>{checkoutError}</p>}
             <button style={{ fontFamily: 'var(--mono)', fontSize: 11, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'rgba(242,237,227,0.35)', background: 'none', border: 'none', cursor: 'pointer' }}
               onClick={() => setView('form')}>
               ← Try a different repo

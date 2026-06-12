@@ -30,7 +30,7 @@ class AnalysisOptions(BaseModel):
 
 class SessionDocument(BaseModel):
     id: str = Field(default_factory=lambda: str(uuid4()), alias='_id')
-    status: Literal['pending', 'processing', 'complete', 'failed'] = 'pending'
+    status: Literal['pending', 'processing', 'complete', 'failed', 'awaiting_payment'] = 'pending'
     progress: int = 0
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     source_type: Literal['github', 'zip']
@@ -54,6 +54,9 @@ class SessionDocument(BaseModel):
     # Cost control
     repo_hash: str | None = None              # SHA256 for cache lookup
     chunk_summaries_text: str | None = None   # Stored for paid synthesis upgrade
+    truncated: bool = False                   # free analysis used fewer files than repo has
+    total_file_count: int = 0                 # files found before any tier truncation
+    upload_stored: bool = False               # ZIP bytes persisted in GridFS for paid re-analysis
 
 
 class AnalyseResponse(BaseModel):

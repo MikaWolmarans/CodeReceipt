@@ -26,6 +26,22 @@ def mock_db(monkeypatch):
 
 
 @pytest.fixture()
+def mock_uploads(monkeypatch):
+    """In-memory replacement for GridFS upload store (mongomock doesn't support GridFS)."""
+    from app.services.session import session_service
+    store: dict = {}
+
+    async def _store(sid, data): store[sid] = data
+    async def _get(sid): return store.get(sid)
+    async def _delete(sid): store.pop(sid, None)
+
+    monkeypatch.setattr(session_service, 'store_upload', _store)
+    monkeypatch.setattr(session_service, 'get_upload', _get)
+    monkeypatch.setattr(session_service, 'delete_upload', _delete)
+    return store
+
+
+@pytest.fixture()
 async def api(mock_db):
     from app.services.session import session_service
     from app.main import app

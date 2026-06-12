@@ -89,6 +89,7 @@ class Settings(BaseSettings):
     # Tiered cost controls
     free_tier_max_files: int = Field(default=15, alias='FREE_TIER_MAX_FILES')
     free_tier_max_mb: int = Field(default=5, alias='FREE_TIER_MAX_MB')
+    paid_tier_max_files: int = Field(default=100, alias='PAID_TIER_MAX_FILES')
     paid_synthesis_model: Optional[str] = Field(default=None, alias='PAID_SYNTHESIS_MODEL')
     pdf_store_ttl_days: int = Field(default=30, alias='PDF_STORE_TTL_DAYS')
     max_free_analyses_per_day: int = Field(default=50, alias='MAX_FREE_ANALYSES_PER_DAY')

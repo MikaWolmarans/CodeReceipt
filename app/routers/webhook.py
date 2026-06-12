@@ -8,8 +8,11 @@ from fastapi import APIRouter, BackgroundTasks, HTTPException, Request
 from fastapi.responses import JSONResponse
 
 from app.config import get_settings
-from app.services.analysis.synthesiser import upgrade_synthesis_to_paid
+from app.services.analysis.stack_detect import detect_stack
+from app.services.analysis.synthesiser import analyse_repository, upgrade_synthesis_to_paid
 from app.services.email import send_paid_manual_email
+from app.services.ingestion.github import ingest_repo_url
+from app.services.ingestion.zip_handler import ingest_zip_bytes
 from app.services.pdf.builder import PdfRenderError, build_pdf_bytes
 from app.services.session import session_service
 from app.services.stripe_service import verify_webhook
@@ -91,18 +94,56 @@ async def stripe_webhook(request: Request, background_tasks: BackgroundTasks) ->
     return JSONResponse({'ok': True})
 
 
+async def _run_paid_analysis(session_id: str, session: dict) -> dict:
+    """Full re-ingestion + paid-tier analysis. Returns the refreshed session."""
+    settings = get_settings()
+    source_meta = session.get('source_meta', {}) or {}
+
+    if session.get('source_type') == 'github' and source_meta.get('url'):
+        files, _meta = await ingest_repo_url(source_meta['url'], settings.max_github_repo_size_mb)
+        repo_name = source_meta['url'].rstrip('/').split('/')[-1]
+    else:
+        zip_data = await session_service.get_upload(session_id)
+        if not zip_data:
+            raise RuntimeError('Stored upload missing for paid analysis.')
+        files, _total = await ingest_zip_bytes(zip_data, settings.max_zip_size_mb)
+        repo_name = (source_meta.get('filename') or 'uploaded-repo').removesuffix('.zip')
+
+    files = files[: settings.paid_tier_max_files]
+    stack = detect_stack(files)
+    chunks, synthesis = await analyse_repository(files, stack, session.get('options', {}), tier='owner_manual')
+    chunk_summaries_text = '\n\n'.join(c['summary'] for c in chunks)
+    await session_service.update_session(
+        session_id,
+        analysis={'chunks': chunks, 'synthesis': synthesis, 'repo_name': repo_name},
+        stack=stack,
+        status='complete',
+        progress=100,
+        chunk_summaries_text=chunk_summaries_text,
+        truncated=False,
+    )
+    await session_service.delete_upload(session_id)
+    return await session_service.get_session(session_id)
+
+
 async def _fulfill_order(session_id: str, customer_email: str | None) -> None:
     session = await session_service.get_session(session_id)
     if not session:
         logger.error('Fulfillment: session %s vanished', session_id)
         return
     try:
-        # 1. Upgrade synthesis using stored chunk summaries (non-fatal on failure)
-        chunk_summaries_text = session.get('chunk_summaries_text', '')
-        if chunk_summaries_text:
+        # 1a. Full paid re-analysis for over-limit or truncated repos
+        needs_full_analysis = (
+            session.get('status') == 'awaiting_payment' or session.get('truncated', False)
+        )
+        if needs_full_analysis:
+            logger.info('Running full paid analysis for %s', session_id)
+            session = await _run_paid_analysis(session_id, session)
+        # 1b. Upgrade synthesis using stored chunk summaries (non-fatal on failure)
+        elif session.get('chunk_summaries_text'):
             try:
                 full_synthesis = await upgrade_synthesis_to_paid(
-                    chunk_summaries_text, session.get('stack', {}), session.get('options', {})
+                    session['chunk_summaries_text'], session.get('stack', {}), session.get('options', {})
                 )
                 updated_analysis = dict(session.get('analysis', {}))
                 updated_analysis['synthesis'] = full_synthesis

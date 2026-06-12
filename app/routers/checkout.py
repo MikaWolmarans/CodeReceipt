@@ -26,12 +26,20 @@ async def create_checkout(session_id: str) -> CheckoutResponse:
     session = await session_service.get_session(session_id)
     if not session:
         raise HTTPException(status_code=404, detail='Session not found.')
-    if session.get('status') != 'complete':
+    if session.get('status') not in {'complete', 'awaiting_payment'}:
         raise HTTPException(status_code=409, detail='Analysis must complete before payment.')
     if session.get('paid'):
         raise HTTPException(status_code=409, detail='This session has already been paid.')
 
-    repo_name = session.get('analysis', {}).get('repo_name', 'repository')
+    repo_name = (
+        session.get('analysis', {}).get('repo_name')
+        or (
+            (session.get('source_meta', {}).get('url') or session.get('source_meta', {}).get('filename') or 'repository')
+            .rstrip('/')
+            .split('/')[-1]
+            .removesuffix('.zip')
+        )
+    )
     prefill_email = session.get('notify_email') or session.get('payment_email')
 
     try:
