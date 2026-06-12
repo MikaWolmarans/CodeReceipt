@@ -1192,6 +1192,7 @@ const LOCKED_SECTIONS = [
   { label: 'AI Agent Handoff Prompts', countKey: null },
   { label: 'Service Schedule + Troubleshooting', countKey: null },
   { label: 'Known Unknowns + Glossary + Next 5 Actions', countKey: null },
+  { label: 'AI Agent Context File (CLAUDE.md)', countKey: null },
 ];
 
 // ── Keep-alive ping (every 4 minutes) ───────────────────────────────────────
@@ -1300,22 +1301,35 @@ function TeaserPanel({ sessionId, preview, onCheckout, checkoutLoading, checkout
 // ── Payment success panel ─────────────────────────────────────────────────────
 function PaymentSuccessPanel({ sessionId, preview }) {
   const [downloading, setDownloading] = useState(false);
+  const [downloadingCtx, setDownloadingCtx] = useState(false);
 
-  const downloadManual = async () => {
-    setDownloading(true);
+  const _triggerDownload = async (url, filename, setLoading) => {
+    setLoading(true);
     try {
-      const res = await fetch(`/export/${sessionId}`);
+      const res = await fetch(url);
       if (!res.ok) throw new Error('Download failed');
       const blob = await res.blob();
       const a = document.createElement('a');
       a.href = URL.createObjectURL(blob);
-      a.download = `${(preview?.repo_name || 'repository').replace(/[^a-zA-Z0-9-]/g, '_')}-owners-manual.pdf`;
+      a.download = filename;
       a.click();
     } catch(e) {
       alert('Download failed. Please try again or check your email.');
     }
-    setDownloading(false);
+    setLoading(false);
   };
+
+  const downloadManual = () => _triggerDownload(
+    `/export/${sessionId}`,
+    `${(preview?.repo_name || 'repository').replace(/[^a-zA-Z0-9-]/g, '_')}-owners-manual.pdf`,
+    setDownloading
+  );
+
+  const downloadAgentContext = () => _triggerDownload(
+    `/export/${sessionId}/agent-context`,
+    'CLAUDE.md',
+    setDownloadingCtx
+  );
 
   return (
     <div style={{ color: '#F2EDE3', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%', padding: 40, textAlign: 'center' }}>
@@ -1324,19 +1338,27 @@ function PaymentSuccessPanel({ sessionId, preview }) {
       <p style={{ fontSize: 14, lineHeight: 1.7, color: 'rgba(242,237,227,0.65)', marginBottom: 8, maxWidth: 340 }}>
         Your Owner's Manual for <strong style={{ color: '#fff' }}>{preview?.repo_name || 'your repo'}</strong> is being generated. You'll receive it by email shortly.
       </p>
-      <p style={{ fontFamily: 'var(--mono)', fontSize: 11, color: 'rgba(242,237,227,0.35)', marginBottom: 40 }}>
+      <p style={{ fontFamily: 'var(--mono)', fontSize: 11, color: 'rgba(242,237,227,0.35)', marginBottom: 32 }}>
         {preview?.payment_email ? `Sending to ${preview.payment_email}` : 'Check your inbox'}
       </p>
       <button
         className="submit-btn"
-        style={{ maxWidth: 320, boxShadow: '6px 6px 0 rgba(232,255,0,0.25)' }}
+        style={{ maxWidth: 320, boxShadow: '6px 6px 0 rgba(232,255,0,0.25)', marginBottom: 12 }}
         onClick={downloadManual}
         disabled={downloading}
       >
-        {downloading ? 'Downloading...' : '↓ Download Manual Now'}
+        {downloading ? 'Downloading...' : '↓ Download Owner\'s Manual (PDF)'}
       </button>
-      <p style={{ fontFamily: 'var(--mono)', fontSize: 10, letterSpacing: '0.08em', color: 'rgba(242,237,227,0.25)', marginTop: 16 }}>
-        Or wait for the email — PDF is attached.
+      <button
+        className="submit-btn"
+        style={{ maxWidth: 320, background: 'transparent', border: '1px solid rgba(232,255,0,0.4)', color: '#E8FF00', marginBottom: 16 }}
+        onClick={downloadAgentContext}
+        disabled={downloadingCtx}
+      >
+        {downloadingCtx ? 'Downloading...' : '↓ CLAUDE.md for your AI tools'}
+      </button>
+      <p style={{ fontFamily: 'var(--mono)', fontSize: 10, letterSpacing: '0.08em', color: 'rgba(242,237,227,0.25)', marginTop: 8 }}>
+        Both files are attached to your confirmation email.
       </p>
     </div>
   );

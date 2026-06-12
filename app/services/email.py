@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import base64
 import logging
 import re
@@ -108,7 +110,8 @@ async def send_manual_ready_email(to_email: str, session_id: str, repo_name: str
 
 
 async def send_paid_manual_email(
-    to_email: str, session_id: str, repo_name: str, pdf_bytes: bytes
+    to_email: str, session_id: str, repo_name: str, pdf_bytes: bytes,
+    agent_context: str | None = None,
 ) -> None:
     """Send the paid Owner's Manual email with PDF attached via Resend."""
     settings = get_settings()
@@ -122,16 +125,18 @@ async def send_paid_manual_email(
     pdf_b64 = base64.b64encode(pdf_bytes).decode('ascii')
     safe_filename = re.sub(r'[^a-zA-Z0-9_-]', '_', repo_name)
 
+    attachments = [{"filename": f"{safe_filename}_owners_manual.pdf", "content": pdf_b64}]
+    if agent_context:
+        attachments.append({
+            "filename": "CLAUDE.md",
+            "content": base64.b64encode(agent_context.encode('utf-8')).decode('ascii'),
+        })
+
     payload = {
         "from": settings.from_email,
         "to": [to_email],
         "subject": f"Your {repo_name} Owner's Manual is ready",
-        "attachments": [
-            {
-                "filename": f"{safe_filename}_owners_manual.pdf",
-                "content": pdf_b64,
-            }
-        ],
+        "attachments": attachments,
         "html": f"""<!DOCTYPE html>
 <html lang="en">
 <head>

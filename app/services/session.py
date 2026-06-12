@@ -91,20 +91,31 @@ class SessionService:
     # ── PDF storage (paid, long TTL) ─────────────────────────────────────
 
     async def store_pdf(self, session_id: str, pdf_bytes: bytes, repo_name: str) -> None:
-        await self.pdf_store.replace_one(
+        await self.pdf_store.update_one(
             {'_id': session_id},
-            {
+            {'$set': {
                 '_id': session_id,
                 'pdf': Binary(pdf_bytes),
                 'repo_name': repo_name,
                 'created_at': datetime.now(timezone.utc),
-            },
+            }},
             upsert=True,
         )
 
     async def get_pdf(self, session_id: str) -> bytes | None:
         doc = await self.pdf_store.find_one({'_id': session_id})
         return bytes(doc['pdf']) if doc else None
+
+    async def store_agent_context(self, session_id: str, markdown: str) -> None:
+        await self.pdf_store.update_one(
+            {'_id': session_id},
+            {'$set': {'agent_context': markdown}},
+            upsert=True,
+        )
+
+    async def get_agent_context(self, session_id: str) -> str | None:
+        doc = await self.pdf_store.find_one({'_id': session_id}, {'agent_context': 1})
+        return doc.get('agent_context') if doc else None
 
     # ── Source upload storage (ZIPs pending paid analysis) ──────────────────
 

@@ -8,6 +8,7 @@ from fastapi import APIRouter, BackgroundTasks, HTTPException, Request
 from fastapi.responses import JSONResponse
 
 from app.config import get_settings
+from app.services.agent_context import build_agent_context
 from app.services.analysis.stack_detect import detect_stack
 from app.services.analysis.synthesiser import analyse_repository, upgrade_synthesis_to_paid
 from app.services.email import send_paid_manual_email
@@ -154,11 +155,12 @@ async def _fulfill_order(session_id: str, customer_email: str | None) -> None:
         else:
             logger.warning('No chunk_summaries_text for %s — PDF uses free synthesis', session_id)
 
-        # 2. Generate + store PDF (fatal on failure — session remains 'processing'
-        #    until Stripe re-delivers; /export regenerates on-demand for paid sessions)
+        # 2. Generate + store PDF and agent context (fatal on failure — session remains
+        #    'processing' until Stripe re-delivers; /export regenerates on-demand)
         repo_name = session.get('analysis', {}).get('repo_name', 'repository')
         pdf_bytes = await build_pdf_bytes(session)
         await session_service.store_pdf(session_id, pdf_bytes, repo_name)
+        await session_service.store_agent_context(session_id, build_agent_context(session))
         await session_service.update_session(session_id, pdf_delivered=True)
 
         # 3. Record customer + send email (non-fatal — PDF is stored, /export works)
@@ -168,7 +170,9 @@ async def _fulfill_order(session_id: str, customer_email: str | None) -> None:
             except Exception as exc:
                 logger.warning('Customer record failed for %s: %s', session_id, exc)
             try:
-                await send_paid_manual_email(customer_email, session_id, repo_name, pdf_bytes)
+                agent_md = await session_service.get_agent_context(session_id)
+                await send_paid_manual_email(customer_email, session_id, repo_name, pdf_bytes,
+                                             agent_context=agent_md)
             except Exception as exc:
                 logger.error('Email delivery failed for %s: %s', session_id, exc)
 

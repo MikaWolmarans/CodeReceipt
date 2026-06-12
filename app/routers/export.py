@@ -3,8 +3,9 @@ import traceback
 from io import BytesIO
 
 from fastapi import APIRouter, HTTPException
-from fastapi.responses import StreamingResponse
+from fastapi.responses import Response, StreamingResponse
 
+from app.services.agent_context import build_agent_context
 from app.services.pdf.builder import PdfRenderError, build_pdf_bytes
 from app.services.session import session_service
 
@@ -65,3 +66,43 @@ async def export_pdf(session_id: str):
 
     await session_service.update_session(session_id, pdf_delivered=True)
     return _pdf_response(pdf_bytes, repo_name)
+
+
+@router.get('/export/{session_id}/agent-context')
+async def export_agent_context(session_id: str):
+    session = await session_service.get_session(session_id)
+
+    if not session:
+        # Session expired — fall back to pdf_store (same 30-day TTL as PDF)
+        stored = await session_service.pdf_store.find_one({'_id': session_id}, {'agent_context': 1})
+        if stored and stored.get('agent_context'):
+            return _markdown_response(stored['agent_context'])
+        raise HTTPException(status_code=404, detail='Session not found or expired.')
+
+    if session.get('status') != 'complete':
+        raise HTTPException(status_code=409, detail='Analysis is not complete yet.')
+
+    if not session.get('paid', False):
+        raise HTTPException(
+            status_code=402,
+            detail={
+                'message': 'Payment required to download the agent context file.',
+                'checkout_path': f'/checkout/{session_id}',
+            },
+        )
+
+    # Serve stored context; fall back to live generation
+    markdown = await session_service.get_agent_context(session_id)
+    if not markdown:
+        markdown = build_agent_context(session)
+        await session_service.store_agent_context(session_id, markdown)
+
+    return _markdown_response(markdown)
+
+
+def _markdown_response(markdown: str) -> Response:
+    return Response(
+        content=markdown.encode('utf-8'),
+        media_type='text/markdown',
+        headers={'Content-Disposition': 'attachment; filename="CLAUDE.md"'},
+    )
