@@ -126,11 +126,16 @@
 
   html { scroll-behavior: smooth; }
 
+  /* Lock horizontal scroll at the viewport level so nothing that slightly
+     overshoots 100% width makes the whole page jitter sideways on scroll
+     (a common mobile-Safari/Chrome failure mode). */
+  html, body { width: 100%; max-width: 100%; overflow-x: hidden; }
+
   body {
     background: var(--cream);
     color: var(--black);
     font-family: var(--sans);
-    overflow-x: hidden;
+    position: relative;
     cursor: crosshair;
   }
 
@@ -922,6 +927,27 @@
 
     .tweaks-panel { width: calc(100vw - 32px); right: 16px; bottom: 16px; }
   }
+
+  /* Collapse the inline two-column sections (Why Paid, Pricing, FAQ) and trim
+     their heavy side padding so text stops compressing into narrow columns. */
+  @media (max-width: 760px) {
+    .split-grid { grid-template-columns: 1fr !important; }
+
+    .whypaid-grid > div,
+    .pricing-grid > div { padding: 40px 20px !important; }
+
+    /* Vertical dividers become horizontal once stacked. */
+    .whypaid-grid > div:first-child { border-right: none !important; border-bottom: 1px solid rgba(242,237,227,0.1) !important; }
+    .pricing-grid > div:first-child { border-right: none !important; border-bottom: var(--border) !important; }
+    .faq-grid > div { border-right: none !important; }
+    .faq-grid > div:first-child > div:last-child { border-bottom: var(--border) !important; }
+    .faq-grid > div > div { padding: 28px 20px !important; }
+
+    /* Inline checkout: stack the payment frame above the order summary. */
+    .checkout-split { flex-direction: column !important; }
+    .checkout-frame { flex: 1 1 auto !important; width: 100% !important; }
+    .checkout-summary { flex: 1 1 auto !important; border-left: none !important; border-top: 1px solid rgba(242,237,227,0.1) !important; padding: 28px 20px !important; }
+  }
 </style>
 </head>
 <body>
@@ -1068,7 +1094,7 @@
       <span class="section-num" style="color:rgba(242,237,227,0.3);">03 /</span>
       <h2 class="section-title" style="color:var(--cream);">Why Paid?</h2>
     </div>
-    <div style="display:grid;grid-template-columns:1fr 1fr;border-top:none;">
+    <div class="split-grid whypaid-grid" style="display:grid;grid-template-columns:1fr 1fr;border-top:none;">
       <div style="padding:64px 48px;border-right:1px solid rgba(242,237,227,0.1);">
         <p style="font-family:var(--mono);font-size:13px;line-height:2;color:rgba(242,237,227,0.7);max-width:480px;">
           Started free. Noble. Unsustainable.<br><br>
@@ -1107,7 +1133,7 @@
       <span class="section-num">04 /</span>
       <h2 class="section-title">Pricing</h2>
     </div>
-    <div style="display:grid;grid-template-columns:1fr 1fr;">
+    <div class="split-grid pricing-grid" style="display:grid;grid-template-columns:1fr 1fr;">
       <!-- Free tier -->
       <div style="padding:64px 48px;border-right:var(--border);">
         <p style="font-family:var(--mono);font-size:10px;letter-spacing:0.2em;text-transform:uppercase;opacity:0.4;margin-bottom:16px;">Free Scan</p>
@@ -1149,7 +1175,7 @@
       <span class="section-num">05 /</span>
       <h2 class="section-title">FAQ</h2>
     </div>
-    <div style="display:grid;grid-template-columns:1fr 1fr;">
+    <div class="split-grid faq-grid" style="display:grid;grid-template-columns:1fr 1fr;">
       <div style="border-right:var(--border);">
         <div style="padding:40px 48px;border-bottom:var(--border);">
           <p style="font-family:var(--mono);font-size:13px;font-weight:700;letter-spacing:0.05em;text-transform:uppercase;margin-bottom:12px;">What's in the full Owner's Manual?</p>
@@ -1472,17 +1498,17 @@ function InlineCheckoutPanel({ checkoutUrl, testMode, sessionId, repoName, onBac
   const currency = breakdown.currency || breakdown.finalTotalCurrency || 'USD';
 
   return (
-    <div style={{
+    <div className="checkout-split" style={{
       display: 'flex', flexDirection: 'row', minHeight: 580,
       background: '#0A0A0A', color: '#F2EDE3', fontFamily: 'var(--mono)',
     }}>
       {/* Left — Dodo iframe */}
-      <div style={{ flex: '1 1 55%', minHeight: 580, background: '#0d0d0d' }}>
+      <div className="checkout-frame" style={{ flex: '1 1 55%', minHeight: 580, background: '#0d0d0d' }}>
         <div id="dodo-inline-checkout" style={{ width: '100%', minHeight: 580 }} />
       </div>
 
       {/* Right — order summary */}
-      <div style={{
+      <div className="checkout-summary" style={{
         flex: '1 1 45%', padding: '40px 32px',
         borderLeft: '1px solid rgba(242,237,227,0.1)',
         display: 'flex', flexDirection: 'column', gap: 0,
