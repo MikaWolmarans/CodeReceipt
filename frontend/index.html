@@ -3,7 +3,87 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>CodeReceipt — The Owner's Manual for Your Code</title>
+<title>CodeReceipt — The Owner's Manual for Code You Vibe-Coded</title>
+<meta name="description" content="CodeReceipt reads a repo you built with AI and hands back a plain-English owner's manual: what you actually shipped, how it holds together, what breaks if you touch it, and how to keep it alive. Free scan in under 60 seconds. Full manual is pay-what-you-want. Code is processed ephemerally and never stored.">
+<meta name="keywords" content="codebase documentation, AI code explanation, owner's manual for code, understand my codebase, vibe coding, explain my repo, AI-generated code documentation, what did I build, codebase audit, pay what you want code documentation">
+<link rel="canonical" href="https://codereceipt.site/">
+<!-- Open Graph / social + AI crawlers -->
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="CodeReceipt">
+<meta property="og:title" content="CodeReceipt — The Owner's Manual for Code You Vibe-Coded">
+<meta property="og:description" content="You shipped it with AI. You don't fully understand it. CodeReceipt reads the whole repo and writes the manual — plain English, no jargon. Free scan, then pay what you want.">
+<meta property="og:url" content="https://codereceipt.site/">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="CodeReceipt — The Owner's Manual for Code You Vibe-Coded">
+<meta name="twitter:description" content="Reads the repo you don't fully understand and writes the manual. Free scan in under 60s. Full manual is pay-what-you-want. Code never stored.">
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "Organization",
+      "@id": "https://codereceipt.site/#org",
+      "name": "CodeReceipt",
+      "url": "https://codereceipt.site/",
+      "description": "CodeReceipt turns a repository into a plain-English owner's manual. Built by developers who have shipped enough production code to know where the bodies are buried.",
+      "knowsAbout": ["codebase documentation", "software architecture", "code maintenance", "AI-assisted development"]
+    },
+    {
+      "@type": "Product",
+      "@id": "https://codereceipt.site/#product",
+      "name": "CodeReceipt Owner's Manual",
+      "url": "https://codereceipt.site/",
+      "description": "A 15-section, plain-English owner's manual for a codebase: architecture overview, key systems, a safe-to-touch map, a risk register, environment variables, AI agent handoff prompts, and a CLAUDE.md context file for your AI tools. Delivered as a typeset PDF by email. Source code is processed ephemerally and never stored, logged, or used for training.",
+      "brand": { "@id": "https://codereceipt.site/#org" },
+      "category": "Developer Tools",
+      "offers": {
+        "@type": "Offer",
+        "url": "https://codereceipt.site/#pricing",
+        "priceCurrency": "USD",
+        "price": "0",
+        "priceSpecification": {
+          "@type": "PriceSpecification",
+          "priceCurrency": "USD",
+          "valueAddedTaxIncluded": false,
+          "description": "Free scan with no payment. The full owner's manual is pay-what-you-want, one-time, with no subscription."
+        },
+        "availability": "https://schema.org/InStock"
+      }
+    },
+    {
+      "@type": "FAQPage",
+      "@id": "https://codereceipt.site/#faq",
+      "mainEntity": [
+        {
+          "@type": "Question",
+          "name": "What is CodeReceipt?",
+          "acceptedAnswer": { "@type": "Answer", "text": "CodeReceipt reads a code repository and writes a plain-English owner's manual for it: what was built, how it works, what is risky to change, and how to maintain it. It is built for people who shipped software with AI and want to actually understand what they have." }
+        },
+        {
+          "@type": "Question",
+          "name": "What is in the full Owner's Manual?",
+          "acceptedAnswer": { "@type": "Answer", "text": "Fifteen sections: Quick Start, Architecture Overview, Key Systems, File Breakdown, Safe-To-Touch Map, Warning Lights, Risk Register, Running Costs, Environment Variables, AI Agent Handoff Prompts, Service Schedule, Troubleshooting, Known Unknowns, Glossary, and Next 5 Actions — plus a CLAUDE.md context file for your AI tools." }
+        },
+        {
+          "@type": "Question",
+          "name": "How much does CodeReceipt cost?",
+          "acceptedAnswer": { "@type": "Answer", "text": "The scan is free. The full owner's manual is pay-what-you-want: you name the price, pay once, and there is no subscription, no auto-renewal, and no hidden fees." }
+        },
+        {
+          "@type": "Question",
+          "name": "Is my source code stored?",
+          "acceptedAnswer": { "@type": "Answer", "text": "No. Your source code is processed ephemerally and is never stored, logged, or used for training. It is gone the moment your manual is ready." }
+        },
+        {
+          "@type": "Question",
+          "name": "Does CodeReceipt work on private repositories?",
+          "acceptedAnswer": { "@type": "Answer", "text": "Yes — via ZIP upload. Download your repo from GitHub or GitLab as a ZIP and drop it into the uploader. No OAuth, no token, and no access to your account is required." }
+        }
+      ]
+    }
+  ]
+}
+</script>
 <template id="__bundler_thumbnail" data-bg-color="#0A0A0A">
   <svg viewBox="0 0 1200 800" xmlns="http://www.w3.org/2000/svg">
     <rect width="1200" height="800" fill="#0A0A0A"/>
@@ -993,8 +1073,8 @@
         <p style="font-family:var(--mono);font-size:13px;line-height:2;color:rgba(242,237,227,0.7);max-width:480px;">
           Started free. Noble. Unsustainable.<br><br>
           Real codebase analysis takes reliable processing, stable hosting, and enough compute to stop scans from timing out, falling over, or returning vibes in JSON.<br><br>
-          So here is the deal: you get a free trial scan. Paid plans unlock deeper analysis, exports, and ongoing maintenance support.<br><br>
-          No growth-hack wizardry. No fake generosity. Just a product with server bills and the decency to keep working.
+          So here is the deal: the scan is free, forever. The full manual is pay-what-you-want — name a number you think it's worth, and that unlocks the deeper analysis, the exports, and the maintenance guides.<br><br>
+          No growth-hack wizardry. No fake generosity. No dark-pattern checkout that "accidentally" subscribes you. Just a product with server bills, an honour-system price tag, and the decency to keep working.
         </p>
       </div>
       <div style="padding:64px 48px;">
@@ -1047,8 +1127,8 @@
       <!-- Paid tier -->
       <div style="padding:64px 48px;background:var(--black);color:var(--cream);">
         <p style="font-family:var(--mono);font-size:10px;letter-spacing:0.2em;text-transform:uppercase;color:var(--yellow);margin-bottom:16px;">Owner's Manual</p>
-        <p style="font-family:var(--mono);font-size:52px;font-weight:700;line-height:1;letter-spacing:-0.03em;margin-bottom:8px;color:var(--yellow);">$9</p>
-        <p style="font-size:13px;color:rgba(242,237,227,0.5);margin-bottom:40px;">One-time · "How does it work?"</p>
+        <p style="font-family:var(--mono);font-size:52px;font-weight:700;line-height:1;letter-spacing:-0.03em;margin-bottom:8px;color:var(--yellow);">PWYW</p>
+        <p style="font-size:13px;color:rgba(242,237,227,0.5);margin-bottom:40px;">Name your price · one-time · "How does it actually work?"</p>
         <div style="display:flex;flex-direction:column;gap:14px;margin-bottom:40px;">
           <p style="font-size:14px;display:flex;align-items:center;gap:12px;"><span style="color:var(--yellow);font-size:12px;">✓</span> Up to 25 MB / 100 files</p>
           <p style="font-size:14px;display:flex;align-items:center;gap:12px;"><span style="color:var(--yellow);font-size:12px;">✓</span> Full 15-section analysis</p>
@@ -1076,8 +1156,8 @@
           <p style="font-size:14px;line-height:1.7;opacity:0.65;">15 sections: Quick Start, Architecture Overview, Key Systems, File Breakdown, Safe-To-Touch Map, Warning Lights, Risk Register, Running Costs, Environment Variables, AI Agent Handoff Prompts, Service Schedule, Troubleshooting, Known Unknowns, Glossary, and Next 5 Actions.</p>
         </div>
         <div style="padding:40px 48px;border-bottom:var(--border);">
-          <p style="font-family:var(--mono);font-size:13px;font-weight:700;letter-spacing:0.05em;text-transform:uppercase;margin-bottom:12px;">Is the $9 a one-time payment?</p>
-          <p style="font-size:14px;line-height:1.7;opacity:0.65;">Yes. You pay once per scan. There's no subscription, no auto-renewal, no hidden fees. Push new code and want a fresh manual? That's a new $9 purchase for the new version.</p>
+          <p style="font-family:var(--mono);font-size:13px;font-weight:700;letter-spacing:0.05em;text-transform:uppercase;margin-bottom:12px;">How much does it cost?</p>
+          <p style="font-size:14px;line-height:1.7;opacity:0.65;">The scan is free. The full manual is pay-what-you-want — you name the price. Pay once, get the manual, done. No subscription, no auto-renewal, no "your trial is ending" emails. Skint students and funded founders pay on the same honour system. Push new code and want a fresh manual? Name a price for the new version.</p>
         </div>
         <div style="padding:40px 48px;">
           <p style="font-family:var(--mono);font-size:13px;font-weight:700;letter-spacing:0.05em;text-transform:uppercase;margin-bottom:12px;">Does it work on private repos?</p>
@@ -1091,11 +1171,11 @@
         </div>
         <div style="padding:40px 48px;border-bottom:var(--border);">
           <p style="font-family:var(--mono);font-size:13px;font-weight:700;letter-spacing:0.05em;text-transform:uppercase;margin-bottom:12px;">What happens after I pay?</p>
-          <p style="font-size:14px;line-height:1.7;opacity:0.65;">Stripe processes your payment, we run the full analysis pipeline, generate your PDF, and email it to you with the file attached — usually within 2 minutes. A 30-day download link is also sent in the email.</p>
+          <p style="font-size:14px;line-height:1.7;opacity:0.65;">Payment clears through an encrypted, PCI-compliant checkout — we never see or touch your card details. Then the real work starts: we run the full analysis pipeline, typeset your PDF, and email it to you with the file attached, usually within 2 minutes. A 30-day download link rides along in the same email.</p>
         </div>
         <div style="padding:40px 48px;">
-          <p style="font-family:var(--mono);font-size:13px;font-weight:700;letter-spacing:0.05em;text-transform:uppercase;margin-bottom:12px;">Can I use a discount code?</p>
-          <p style="font-size:14px;line-height:1.7;opacity:0.65;">Yes. The Stripe checkout page includes a "Have a promo code?" field. Enter any valid code there and the discount applies instantly before you pay.</p>
+          <p style="font-family:var(--mono);font-size:13px;font-weight:700;letter-spacing:0.05em;text-transform:uppercase;margin-bottom:12px;">How do I know my code is safe?</p>
+          <p style="font-size:14px;line-height:1.7;opacity:0.65;">Because we built this the way we'd want our own repos handled. Your code is read in memory, analysed once, and dropped — never written to a database, never logged, never fed to a training set. No background access to your GitHub, no tokens sitting in someone's env file. We've shipped enough production code to be paranoid on your behalf.</p>
         </div>
       </div>
     </div>
@@ -1264,7 +1344,7 @@ function TeaserPanel({ sessionId, preview, onCheckout, checkoutLoading, checkout
 
         {/* Locked sections */}
         <div style={{ marginBottom: 24 }}>
-          <p style={{ fontFamily: 'var(--mono)', fontSize: 10, letterSpacing: '0.2em', textTransform: 'uppercase', color: 'rgba(242,237,227,0.35)', marginBottom: 12 }}>OWNER'S MANUAL — $9</p>
+          <p style={{ fontFamily: 'var(--mono)', fontSize: 10, letterSpacing: '0.2em', textTransform: 'uppercase', color: 'rgba(242,237,227,0.35)', marginBottom: 12 }}>OWNER'S MANUAL — PAY WHAT YOU WANT</p>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
             {LOCKED_SECTIONS.map((s, i) => {
               const n = s.countKey ? sc[s.countKey] : null;
@@ -1289,10 +1369,10 @@ function TeaserPanel({ sessionId, preview, onCheckout, checkoutLoading, checkout
           onClick={onCheckout}
           disabled={checkoutLoading}
         >
-          {checkoutLoading ? 'Opening Checkout...' : 'Get Full Owner\'s Manual — $9 →'}
+          {checkoutLoading ? 'Opening Checkout...' : 'Unlock the Full Manual — Name Your Price →'}
         </button>
         <p style={{ fontFamily: 'var(--mono)', fontSize: 10, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'rgba(242,237,227,0.25)', marginTop: 12, textAlign: 'center' }}>
-          One-time · PDF delivered by email · 30-day link
+          Pay what you want · one-time · PDF + CLAUDE.md by email · 30-day link
         </p>
       </div>
     </div>
@@ -1466,8 +1546,8 @@ function InlineCheckoutPanel({ checkoutUrl, testMode, sessionId, repoName, onBac
         {/* Guarantee */}
         <div style={{ marginTop: 'auto', paddingTop: 32 }}>
           <p style={{ fontSize: 10, letterSpacing: '0.08em', color: 'rgba(242,237,227,0.2)', lineHeight: 1.8 }}>
-            One-time payment · PDF + CLAUDE.md delivered by email<br />
-            30-day download link · Processed securely by Dodo Payments
+            Name your price · one-time · PDF + CLAUDE.md by email<br />
+            30-day download link · Encrypted, PCI-compliant checkout — we never see your card
           </p>
         </div>
       </div>
@@ -1754,8 +1834,12 @@ function App() {
           <span className="line-stroke">MANUAL</span>
         </h1>
         <p className="hero-desc">
-          You shipped it with AI. Now actually understand it. Drop your repo and get a free scan —
-          then unlock the full Owner's Manual: what was built, how it works, and how to maintain it.
+          You vibe-coded something real. It works. You're also not entirely sure why — and
+          that's the part that wakes you up at 2am. CodeReceipt reads the whole repo and writes
+          it back to you in plain English: what you built, how the pieces hold together, what
+          quietly breaks if you touch the wrong file, and how to keep the thing alive. Your code
+          never leaves the room — processed once, stored never. Free scan to start. Pay what
+          you want for the full manual.
         </p>
       </div>
       <div className="hero-stats">
@@ -1768,7 +1852,7 @@ function App() {
           <span className="stat-label">Free Scan</span>
         </div>
         <div className="stat">
-          <span className="stat-num">$9</span>
+          <span className="stat-num">PWYW</span>
           <span className="stat-label">Full Manual</span>
         </div>
       </div>
@@ -1843,7 +1927,7 @@ function App() {
             <button className="submit-btn" style={{ maxWidth: 320, boxShadow: '6px 6px 0 rgba(232,255,0,0.25)', marginBottom: 16 }}
               onClick={sessionId ? handleCheckout : () => window.location.href = '#pricing'}
               disabled={checkoutLoading}>
-              {sessionId ? (checkoutLoading ? 'Opening Checkout...' : 'Get Owner\'s Manual — $9 →') : 'See Pricing →'}
+              {sessionId ? (checkoutLoading ? 'Opening Checkout...' : 'Get the Full Manual — Name Your Price →') : 'See Pricing →'}
             </button>
             {checkoutError && <p style={{ fontFamily: 'var(--mono)', fontSize: 11, color: '#FF2B2B', marginBottom: 12 }}>{checkoutError}</p>}
             <button style={{ fontFamily: 'var(--mono)', fontSize: 11, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'rgba(242,237,227,0.35)', background: 'none', border: 'none', cursor: 'pointer' }}
