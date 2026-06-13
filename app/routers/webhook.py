@@ -1,4 +1,4 @@
-"""POST /webhooks/stripe — handles Stripe payment events."""
+"""POST /webhooks/dodo — handles Dodo Payments payment events."""
 from __future__ import annotations
 
 import logging
@@ -11,12 +11,12 @@ from app.config import get_settings
 from app.services.agent_context import build_agent_context
 from app.services.analysis.stack_detect import detect_stack
 from app.services.analysis.synthesiser import analyse_repository, upgrade_synthesis_to_paid
+from app.services.dodo_service import verify_webhook
 from app.services.email import send_paid_manual_email
 from app.services.ingestion.github import ingest_repo_url
 from app.services.ingestion.zip_handler import ingest_zip_bytes
 from app.services.pdf.builder import PdfRenderError, build_pdf_bytes
 from app.services.session import session_service
-from app.services.stripe_service import verify_webhook
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
@@ -27,33 +27,35 @@ def _as_utc(dt: datetime) -> datetime:
     return dt.replace(tzinfo=timezone.utc) if dt.tzinfo is None else dt
 
 
-@router.post('/webhooks/stripe')
-async def stripe_webhook(request: Request, background_tasks: BackgroundTasks) -> JSONResponse:
+@router.post('/webhooks/dodo')
+async def dodo_webhook(request: Request, background_tasks: BackgroundTasks) -> JSONResponse:
     settings = get_settings()
 
-    if not settings.stripe_webhook_secret:
-        logger.warning('STRIPE_WEBHOOK_SECRET not set — webhook rejected')
+    if not settings.dodo_webhook_secret:
+        logger.warning('DODO_WEBHOOK_SECRET not set — webhook rejected')
         raise HTTPException(status_code=400, detail='Webhook not configured.')
 
     payload = await request.body()
-    sig_header = request.headers.get('stripe-signature', '')
 
     try:
-        event = verify_webhook(payload, sig_header, settings.stripe_webhook_secret)
+        event = verify_webhook(payload, dict(request.headers), settings.dodo_webhook_secret)
     except Exception as exc:
-        logger.warning('Stripe webhook signature invalid: %s', exc)
+        logger.warning('Dodo webhook signature invalid: %s', exc)
         raise HTTPException(status_code=400, detail='Invalid webhook signature.')
 
-    if event['type'] == 'checkout.session.completed':
-        stripe_session = event['data']['object']
-        cr_session_id: str | None = stripe_session.get('metadata', {}).get('session_id')
-        customer_email: str | None = stripe_session.get('customer_details', {}).get('email')
-        stripe_checkout_id: str | None = stripe_session.get('id')
+    if event.get('type') == 'payment.succeeded':
+        data = event.get('data', {})
+        metadata = data.get('metadata', {})
+        customer = data.get('customer', {})
+
+        cr_session_id: str | None = metadata.get('session_id')
+        customer_email: str | None = customer.get('email')
+        dodo_payment_id: str | None = data.get('payment_id')
 
         if not cr_session_id:
             logger.error(
-                'Stripe webhook missing session_id in metadata (checkout: %s)',
-                stripe_checkout_id,
+                'Dodo webhook missing session_id in metadata (payment: %s)',
+                dodo_payment_id,
             )
             return JSONResponse({'ok': False})
 
@@ -84,7 +86,7 @@ async def stripe_webhook(request: Request, background_tasks: BackgroundTasks) ->
             paid=True,
             paid_at=datetime.now(timezone.utc),
             payment_email=customer_email,
-            stripe_checkout_id=stripe_checkout_id,
+            dodo_payment_id=dodo_payment_id,
             tier='owner_manual',
             fulfillment_status='processing',
             fulfillment_started_at=datetime.now(timezone.utc),

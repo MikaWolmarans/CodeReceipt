@@ -12,4 +12,4 @@ chevron==0.14.0
 playwright==1.51.0
 aiofiles>=23.0,<25.0
 openai>=1.0.0
-stripe>=8.0.0
+standardwebhooks>=1.0.0

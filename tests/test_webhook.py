@@ -1,4 +1,4 @@
-"""Tests for POST /webhooks/stripe — signature gate and fulfillment state machine."""
+"""Tests for POST /webhooks/dodo — signature gate and fulfillment state machine."""
 from datetime import datetime, timedelta, timezone
 
 import pytest
@@ -9,12 +9,12 @@ from app.services.pdf.builder import PdfRenderError
 
 def _event(session_id='s1', email='buyer@example.com'):
     return {
-        'type': 'checkout.session.completed',
-        'data': {'object': {
-            'id': 'cs_test_123',
+        'type': 'payment.succeeded',
+        'data': {
+            'payment_id': 'pay_test_123',
             'metadata': {'session_id': session_id},
-            'customer_details': {'email': email},
-        }},
+            'customer': {'email': email},
+        },
     }
 
 
@@ -35,26 +35,26 @@ def _session(session_id, extra=None):
 
 @pytest.mark.asyncio
 async def test_webhook_no_secret_400(api):
-    r = await api.post('/webhooks/stripe', content=b'{}', headers={'stripe-signature': 'x'})
+    r = await api.post('/webhooks/dodo', content=b'{}', headers={'webhook-signature': 'v1,x'})
     assert r.status_code == 400
 
 
 @pytest.mark.asyncio
 async def test_webhook_bad_signature_400(api, monkeypatch):
-    monkeypatch.setenv('STRIPE_WEBHOOK_SECRET', 'whsec_dummy')
+    monkeypatch.setenv('DODO_WEBHOOK_SECRET', 'dwhsec_dummy')
 
-    def _raise(payload, sig, secret):
+    def _raise(payload, headers, secret):
         raise ValueError('bad sig')
 
     monkeypatch.setattr('app.routers.webhook.verify_webhook', _raise)
-    r = await api.post('/webhooks/stripe', content=b'{}', headers={'stripe-signature': 'x'})
+    r = await api.post('/webhooks/dodo', content=b'{}', headers={'webhook-signature': 'v1,x'})
     assert r.status_code == 400
 
 
 @pytest.mark.asyncio
 async def test_webhook_fulfilled_idempotent(api, mock_db, monkeypatch):
     """Replay for a fully fulfilled session: fulfillment not re-run."""
-    monkeypatch.setenv('STRIPE_WEBHOOK_SECRET', 'whsec_dummy')
+    monkeypatch.setenv('DODO_WEBHOOK_SECRET', 'dwhsec_dummy')
     await mock_db['sessions'].insert_one(
         _session('s1', {'paid': True, 'fulfillment_status': 'complete'})
     )
@@ -69,7 +69,7 @@ async def test_webhook_fulfilled_idempotent(api, mock_db, monkeypatch):
     monkeypatch.setattr('app.routers.webhook.send_paid_manual_email', _no_call)
     monkeypatch.setattr('app.routers.webhook.upgrade_synthesis_to_paid', _no_call)
 
-    r = await api.post('/webhooks/stripe', content=b'{}', headers={'stripe-signature': 'x'})
+    r = await api.post('/webhooks/dodo', content=b'{}', headers={'webhook-signature': 'v1,x'})
     assert r.status_code == 200
     assert r.json() == {'ok': True}
     assert called['n'] == 0, 'Fulfillment must not run for completed session'
@@ -78,7 +78,7 @@ async def test_webhook_fulfilled_idempotent(api, mock_db, monkeypatch):
 @pytest.mark.asyncio
 async def test_webhook_in_flight_idempotent(api, mock_db, monkeypatch):
     """Replay while fulfillment is in-flight (recent started_at): not re-run."""
-    monkeypatch.setenv('STRIPE_WEBHOOK_SECRET', 'whsec_dummy')
+    monkeypatch.setenv('DODO_WEBHOOK_SECRET', 'dwhsec_dummy')
     await mock_db['sessions'].insert_one(_session('s2', {
         'paid': True,
         'fulfillment_status': 'processing',
@@ -93,7 +93,7 @@ async def test_webhook_in_flight_idempotent(api, mock_db, monkeypatch):
 
     monkeypatch.setattr('app.routers.webhook.build_pdf_bytes', _no_call)
 
-    r = await api.post('/webhooks/stripe', content=b'{}', headers={'stripe-signature': 'x'})
+    r = await api.post('/webhooks/dodo', content=b'{}', headers={'webhook-signature': 'v1,x'})
     assert r.status_code == 200
     assert called['n'] == 0, 'In-flight fulfillment must not be re-run'
 
@@ -101,7 +101,7 @@ async def test_webhook_in_flight_idempotent(api, mock_db, monkeypatch):
 @pytest.mark.asyncio
 async def test_webhook_stale_processing_reruns(api, mock_db, monkeypatch):
     """Stale fulfillment_started_at (>15 min ago) triggers a re-run."""
-    monkeypatch.setenv('STRIPE_WEBHOOK_SECRET', 'whsec_dummy')
+    monkeypatch.setenv('DODO_WEBHOOK_SECRET', 'dwhsec_dummy')
     await mock_db['sessions'].insert_one(_session('s3', {
         'fulfillment_status': 'processing',
         'fulfillment_started_at': datetime.now(timezone.utc) - timedelta(minutes=30),
@@ -120,14 +120,14 @@ async def test_webhook_stale_processing_reruns(api, mock_db, monkeypatch):
     monkeypatch.setattr('app.routers.webhook.build_pdf_bytes', _track_pdf)
     monkeypatch.setattr('app.routers.webhook.send_paid_manual_email', _noop)
 
-    r = await api.post('/webhooks/stripe', content=b'{}', headers={'stripe-signature': 'x'})
+    r = await api.post('/webhooks/dodo', content=b'{}', headers={'webhook-signature': 'v1,x'})
     assert r.status_code == 200
     assert called['n'] == 1, 'Stale fulfillment must be restarted'
 
 
 @pytest.mark.asyncio
 async def test_webhook_happy_path(api, mock_db, monkeypatch):
-    monkeypatch.setenv('STRIPE_WEBHOOK_SECRET', 'whsec_dummy')
+    monkeypatch.setenv('DODO_WEBHOOK_SECRET', 'dwhsec_dummy')
     await mock_db['sessions'].insert_one(_session('s4', {'chunk_summaries_text': 'chunk data'}))
 
     monkeypatch.setattr('app.routers.webhook.verify_webhook', lambda *a: _event('s4'))
@@ -145,7 +145,7 @@ async def test_webhook_happy_path(api, mock_db, monkeypatch):
     monkeypatch.setattr('app.routers.webhook.build_pdf_bytes', _build_pdf)
     monkeypatch.setattr('app.routers.webhook.send_paid_manual_email', _send_email)
 
-    r = await api.post('/webhooks/stripe', content=b'{}', headers={'stripe-signature': 'x'})
+    r = await api.post('/webhooks/dodo', content=b'{}', headers={'webhook-signature': 'v1,x'})
     assert r.status_code == 200
 
     session = await session_service.get_session('s4')
@@ -162,7 +162,7 @@ async def test_webhook_happy_path(api, mock_db, monkeypatch):
 @pytest.mark.asyncio
 async def test_webhook_awaiting_payment_runs_full_analysis(api, mock_db, mock_uploads, monkeypatch):
     """ZIP awaiting_payment session: full re-analysis runs, synthesis upgrade skipped."""
-    monkeypatch.setenv('STRIPE_WEBHOOK_SECRET', 'whsec_dummy')
+    monkeypatch.setenv('DODO_WEBHOOK_SECRET', 'dwhsec_dummy')
     await mock_db['sessions'].insert_one(_session('s6', {
         'status': 'awaiting_payment',
         'tier': 'owner_manual',
@@ -200,7 +200,7 @@ async def test_webhook_awaiting_payment_runs_full_analysis(api, mock_db, mock_up
     monkeypatch.setattr('app.routers.webhook.build_pdf_bytes', _build_pdf)
     monkeypatch.setattr('app.routers.webhook.send_paid_manual_email', _noop)
 
-    r = await api.post('/webhooks/stripe', content=b'{}', headers={'stripe-signature': 'x'})
+    r = await api.post('/webhooks/dodo', content=b'{}', headers={'webhook-signature': 'v1,x'})
     assert r.status_code == 200
 
     session = await session_service.get_session('s6')
@@ -214,7 +214,7 @@ async def test_webhook_awaiting_payment_runs_full_analysis(api, mock_db, mock_up
 @pytest.mark.asyncio
 async def test_webhook_truncated_session_runs_full_analysis(api, mock_db, mock_uploads, monkeypatch):
     """Truncated complete session: full re-analysis via URL ingest, not summary upgrade."""
-    monkeypatch.setenv('STRIPE_WEBHOOK_SECRET', 'whsec_dummy')
+    monkeypatch.setenv('DODO_WEBHOOK_SECRET', 'dwhsec_dummy')
     await mock_db['sessions'].insert_one(_session('s7', {
         'status': 'complete',
         'truncated': True,
@@ -247,7 +247,7 @@ async def test_webhook_truncated_session_runs_full_analysis(api, mock_db, mock_u
     monkeypatch.setattr('app.routers.webhook.build_pdf_bytes', _build_pdf)
     monkeypatch.setattr('app.routers.webhook.send_paid_manual_email', _noop)
 
-    r = await api.post('/webhooks/stripe', content=b'{}', headers={'stripe-signature': 'x'})
+    r = await api.post('/webhooks/dodo', content=b'{}', headers={'webhook-signature': 'v1,x'})
     assert r.status_code == 200
     assert analyse_called['n'] == 1, 'analyse_repository must be called for truncated sessions'
 
@@ -255,7 +255,7 @@ async def test_webhook_truncated_session_runs_full_analysis(api, mock_db, mock_u
 @pytest.mark.asyncio
 async def test_webhook_untruncated_session_uses_upgrade_path(api, mock_db, mock_uploads, monkeypatch):
     """Untruncated complete session: summary upgrade runs, not full re-analysis."""
-    monkeypatch.setenv('STRIPE_WEBHOOK_SECRET', 'whsec_dummy')
+    monkeypatch.setenv('DODO_WEBHOOK_SECRET', 'dwhsec_dummy')
     await mock_db['sessions'].insert_one(_session('s8', {
         'chunk_summaries_text': 'chunk data',
         'truncated': False,
@@ -285,7 +285,7 @@ async def test_webhook_untruncated_session_uses_upgrade_path(api, mock_db, mock_
     monkeypatch.setattr('app.routers.webhook.build_pdf_bytes', _build_pdf)
     monkeypatch.setattr('app.routers.webhook.send_paid_manual_email', _noop)
 
-    r = await api.post('/webhooks/stripe', content=b'{}', headers={'stripe-signature': 'x'})
+    r = await api.post('/webhooks/dodo', content=b'{}', headers={'webhook-signature': 'v1,x'})
     assert r.status_code == 200
     assert upgrade_called['n'] == 1
     assert analyse_called['n'] == 0
@@ -294,7 +294,7 @@ async def test_webhook_untruncated_session_uses_upgrade_path(api, mock_db, mock_
 @pytest.mark.asyncio
 async def test_webhook_pdf_failure_marks_failed(api, mock_db, monkeypatch):
     """PDF failure → 200 response (fast return), session marked failed, no pdf_store doc."""
-    monkeypatch.setenv('STRIPE_WEBHOOK_SECRET', 'whsec_dummy')
+    monkeypatch.setenv('DODO_WEBHOOK_SECRET', 'dwhsec_dummy')
     await mock_db['sessions'].insert_one(_session('s5'))
 
     monkeypatch.setattr('app.routers.webhook.verify_webhook', lambda *a: _event('s5'))
@@ -310,7 +310,7 @@ async def test_webhook_pdf_failure_marks_failed(api, mock_db, monkeypatch):
     monkeypatch.setattr('app.routers.webhook.build_pdf_bytes', _bad_pdf)
     monkeypatch.setattr('app.routers.webhook.send_paid_manual_email', _no_email)
 
-    r = await api.post('/webhooks/stripe', content=b'{}', headers={'stripe-signature': 'x'})
+    r = await api.post('/webhooks/dodo', content=b'{}', headers={'webhook-signature': 'v1,x'})
     assert r.status_code == 200
 
     session = await session_service.get_session('s5')

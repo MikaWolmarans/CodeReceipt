@@ -28,6 +28,7 @@
 <script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
 <script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
 <script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/dodopayments-checkout@latest/dist/index.js"></script>
 <style>
   :root {
     --black: #0A0A0A;
@@ -1364,6 +1365,116 @@ function PaymentSuccessPanel({ sessionId, preview }) {
   );
 }
 
+// ── Inline Checkout Panel (Dodo Payments) ────────────────────────────────────
+function InlineCheckoutPanel({ checkoutUrl, testMode, sessionId, repoName, onBack }) {
+  const [breakdown, setBreakdown] = useState({});
+
+  useEffect(() => {
+    const SDK = window.DodoPaymentsCheckout?.DodoPayments;
+    if (!SDK || !checkoutUrl) return;
+
+    SDK.Initialize({
+      mode: testMode ? 'test' : 'live',
+      displayType: 'inline',
+      onEvent: (event) => {
+        if (event.event_type === 'checkout.breakdown') {
+          setBreakdown(event.data?.message || {});
+        }
+      },
+    });
+
+    SDK.Checkout.open({ checkoutUrl, elementId: 'dodo-inline-checkout' });
+    return () => SDK.Checkout.close();
+  }, [checkoutUrl]);
+
+  const fmt = (amt, curr) =>
+    amt != null && curr ? `${curr} ${(amt / 100).toFixed(2)}` : '—';
+  const currency = breakdown.currency || breakdown.finalTotalCurrency || 'USD';
+
+  return (
+    <div style={{
+      display: 'flex', flexDirection: 'row', minHeight: 580,
+      background: '#0A0A0A', color: '#F2EDE3', fontFamily: 'var(--mono)',
+    }}>
+      {/* Left — Dodo iframe */}
+      <div style={{ flex: '1 1 55%', minHeight: 580, background: '#0d0d0d' }}>
+        <div id="dodo-inline-checkout" style={{ width: '100%', minHeight: 580 }} />
+      </div>
+
+      {/* Right — order summary */}
+      <div style={{
+        flex: '1 1 45%', padding: '40px 32px',
+        borderLeft: '1px solid rgba(242,237,227,0.1)',
+        display: 'flex', flexDirection: 'column', gap: 0,
+      }}>
+        {/* Back */}
+        <button onClick={onBack} style={{
+          background: 'none', border: 'none', color: 'rgba(242,237,227,0.35)',
+          fontFamily: 'var(--mono)', fontSize: 11, letterSpacing: '0.12em',
+          textTransform: 'uppercase', cursor: 'pointer', padding: 0,
+          marginBottom: 32, textAlign: 'left',
+        }}>← Back</button>
+
+        {/* Eyebrow */}
+        <p style={{ fontSize: 10, letterSpacing: '0.25em', textTransform: 'uppercase', color: 'rgba(242,237,227,0.3)', marginBottom: 12 }}>
+          // CodeReceipt · Order Summary
+        </p>
+
+        {/* Repo name */}
+        <p style={{ fontSize: 22, fontWeight: 700, letterSpacing: '-0.02em', color: '#fff', marginBottom: 4, lineHeight: 1.2 }}>
+          {repoName || 'Your Repository'}
+        </p>
+        <p style={{ fontSize: 11, letterSpacing: '0.15em', textTransform: 'uppercase', color: '#E8FF00', marginBottom: 32 }}>
+          Owner's Manual
+        </p>
+
+        {/* Line items */}
+        <div style={{ borderTop: '1px solid rgba(242,237,227,0.1)', paddingTop: 20, display: 'flex', flexDirection: 'column', gap: 14 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13 }}>
+            <span style={{ color: 'rgba(242,237,227,0.6)' }}>Owner's Manual PDF</span>
+            <span>{breakdown.subTotal != null ? fmt(breakdown.subTotal, currency) : '—'}</span>
+          </div>
+          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13 }}>
+            <span style={{ color: 'rgba(242,237,227,0.6)' }}>CLAUDE.md agent context</span>
+            <span style={{ color: '#E8FF00' }}>included</span>
+          </div>
+          {breakdown.discount ? (
+            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13 }}>
+              <span style={{ color: 'rgba(242,237,227,0.6)' }}>Discount</span>
+              <span style={{ color: '#E8FF00' }}>−{fmt(breakdown.discount, currency)}</span>
+            </div>
+          ) : null}
+          {breakdown.tax != null ? (
+            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13 }}>
+              <span style={{ color: 'rgba(242,237,227,0.6)' }}>Tax</span>
+              <span>{fmt(breakdown.tax, currency)}</span>
+            </div>
+          ) : null}
+        </div>
+
+        {/* Total */}
+        <div style={{
+          borderTop: '1px solid rgba(242,237,227,0.1)', marginTop: 20, paddingTop: 20,
+          display: 'flex', justifyContent: 'space-between', alignItems: 'baseline',
+        }}>
+          <span style={{ fontSize: 12, letterSpacing: '0.12em', textTransform: 'uppercase', color: 'rgba(242,237,227,0.5)' }}>Total</span>
+          <span style={{ fontSize: 22, fontWeight: 700, color: '#E8FF00' }}>
+            {fmt(breakdown.finalTotal ?? breakdown.total, breakdown.finalTotalCurrency ?? currency)}
+          </span>
+        </div>
+
+        {/* Guarantee */}
+        <div style={{ marginTop: 'auto', paddingTop: 32 }}>
+          <p style={{ fontSize: 10, letterSpacing: '0.08em', color: 'rgba(242,237,227,0.2)', lineHeight: 1.8 }}>
+            One-time payment · PDF + CLAUDE.md delivered by email<br />
+            30-day download link · Processed securely by Dodo Payments
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ── Main App ──────────────────────────────────────────────────────────────────
 function App() {
   useKeepAlive();
@@ -1383,7 +1494,7 @@ function App() {
   const [sessionId, setSessionId] = useState(returnSessionId || null);
   const [error, setError] = useState(null);
 
-  // Views: 'form' | 'processing' | 'teaser' | 'upgrade' | 'payment_pending' | 'resume' | 'paid'
+  // Views: 'form' | 'processing' | 'teaser' | 'upgrade' | 'inline_checkout' | 'payment_pending' | 'resume' | 'paid'
   const [view, setView] = useState(
     returnSessionId ? (paymentStatus === 'success' ? 'payment_pending' : 'resume') : 'form'
   );
@@ -1391,6 +1502,7 @@ function App() {
   const [upgradeReason, setUpgradeReason] = useState('');
   const [checkoutLoading, setCheckoutLoading] = useState(false);
   const [checkoutError, setCheckoutError] = useState(null);
+  const [inlineCheckout, setInlineCheckout] = useState(null); // { url, testMode }
 
   const canSubmit = mode === 'url' ? url.length > 5 : !!file;
 
@@ -1523,7 +1635,7 @@ function App() {
     setError(null);
   };
 
-  // ── Stripe checkout ─────────────────────────────────────────────────────────
+  // ── Dodo Payments inline checkout ───────────────────────────────────────────
   const handleCheckout = async () => {
     setCheckoutLoading(true);
     setCheckoutError(null);
@@ -1533,10 +1645,12 @@ function App() {
         const j = await r.json();
         throw new Error(j.detail || 'Could not open checkout.');
       }
-      const { checkout_url } = await r.json();
-      window.location.href = checkout_url;
+      const { checkout_url, test_mode } = await r.json();
+      setInlineCheckout({ url: checkout_url, testMode: test_mode });
+      setView('inline_checkout');
     } catch(e) {
       setCheckoutError(e.message);
+    } finally {
       setCheckoutLoading(false);
     }
   };
@@ -1665,7 +1779,7 @@ function App() {
     <div className="hero">
       {renderHeroLeft()}
 
-      <div className="hero-right" style={{ position: 'relative' }}>
+      <div className="hero-right" style={{ position: 'relative', ...(view === 'inline_checkout' ? { maxWidth: '100%', width: '100%' } : {}) }}>
         <div className="panel-header">
           <div className="panel-dots">
             <div className="dot red" />
@@ -1676,6 +1790,7 @@ function App() {
             {view === 'teaser' ? `${preview?.repo_name || ''} — free scan` :
              view === 'paid' ? 'manual delivered' :
              view === 'payment_pending' ? 'processing payment...' :
+             view === 'inline_checkout' ? 'checkout — owner\'s manual' :
              'codereceipt — manual generator'}
           </span>
         </div>
@@ -1704,6 +1819,17 @@ function App() {
             </div>
             <button className="proc-cancel" onClick={cancelProcessing}>Cancel</button>
           </div>
+        )}
+
+        {/* Inline checkout (Dodo Payments) */}
+        {view === 'inline_checkout' && inlineCheckout && (
+          <InlineCheckoutPanel
+            checkoutUrl={inlineCheckout.url}
+            testMode={inlineCheckout.testMode}
+            sessionId={sessionId}
+            repoName={preview?.repo_name || ''}
+            onBack={() => setView(preview ? 'teaser' : 'upgrade')}
+          />
         )}
 
         {/* Upgrade prompt */}

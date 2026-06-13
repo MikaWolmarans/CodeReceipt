@@ -81,10 +81,11 @@ class Settings(BaseSettings):
     from_email: str = Field(default='CodeReceipt <no-reply@codereceipt.site>', alias='FROM_EMAIL')
     export_link_ttl_seconds: int = Field(default=86400, alias='EXPORT_LINK_TTL_SECONDS')
 
-    # Stripe / payments
-    stripe_secret_key: Optional[str] = Field(default=None, alias='STRIPE_SECRET_KEY')
-    stripe_webhook_secret: Optional[str] = Field(default=None, alias='STRIPE_WEBHOOK_SECRET')
-    stripe_price_id: Optional[str] = Field(default=None, alias='STRIPE_PRICE_ID')
+    # Dodo Payments
+    dodo_api_key: Optional[str] = Field(default=None, alias='DODO_API_KEY')
+    dodo_webhook_secret: Optional[str] = Field(default=None, alias='DODO_WEBHOOK_SECRET')
+    dodo_product_id: Optional[str] = Field(default=None, alias='DODO_PRODUCT_ID')
+    dodo_test_mode: bool = Field(default=True, alias='DODO_TEST_MODE')
 
     # Tiered cost controls
     free_tier_max_files: int = Field(default=15, alias='FREE_TIER_MAX_FILES')

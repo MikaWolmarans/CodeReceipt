@@ -1,12 +1,12 @@
-"""POST /checkout/{session_id} — creates a Stripe Checkout session."""
+"""POST /checkout/{session_id} — creates a Dodo Payments checkout session."""
 import logging
 
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 
 from app.config import get_settings
+from app.services.dodo_service import create_checkout_session
 from app.services.session import session_service
-from app.services.stripe_service import create_checkout_session
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
@@ -14,13 +14,14 @@ router = APIRouter()
 
 class CheckoutResponse(BaseModel):
     checkout_url: str
+    test_mode: bool
 
 
 @router.post('/checkout/{session_id}', response_model=CheckoutResponse)
 async def create_checkout(session_id: str) -> CheckoutResponse:
     settings = get_settings()
 
-    if not settings.stripe_secret_key or not settings.stripe_price_id:
+    if not settings.dodo_api_key or not settings.dodo_product_id:
         raise HTTPException(status_code=503, detail='Payments are not configured.')
 
     session = await session_service.get_session(session_id)
@@ -48,10 +49,12 @@ async def create_checkout(session_id: str) -> CheckoutResponse:
             repo_name=repo_name,
             prefill_email=prefill_email,
             frontend_url=settings.frontend_url,
-            price_id=settings.stripe_price_id,
+            product_id=settings.dodo_product_id,
+            api_key=settings.dodo_api_key,
+            test_mode=settings.dodo_test_mode,
         )
     except Exception as exc:
-        logger.error('Stripe checkout creation failed for %s: %s', session_id, exc)
+        logger.error('Dodo checkout creation failed for %s: %s', session_id, exc)
         raise HTTPException(status_code=502, detail='Could not create checkout session.') from exc
 
-    return CheckoutResponse(checkout_url=url)
+    return CheckoutResponse(checkout_url=url, test_mode=settings.dodo_test_mode)
