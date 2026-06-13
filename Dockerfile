@@ -13,4 +13,6 @@ RUN playwright install chromium
 # Copy application code
 COPY . .
 
-CMD uvicorn app.main:app --host 0.0.0.0 --port $PORT
+# Shell form via `sh -c` so ${PORT} is expanded at runtime, with a sane
+# default when the platform doesn't inject one.
+CMD ["sh", "-c", "uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8000}"]
