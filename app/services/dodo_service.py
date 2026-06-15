@@ -27,10 +27,20 @@ async def create_checkout_session(
     product_id: str,
     api_key: str,
     test_mode: bool = True,
+    amount_cents: int | None = None,
 ) -> str:
-    """Create a Dodo Payments checkout session and return its URL."""
+    """Create a Dodo Payments checkout session and return its URL.
+
+    *amount_cents* sets the pay-what-you-want price (in the currency's lowest
+    unit) on the cart line. It is only honoured for PWYW-enabled products and
+    must fall within the product's configured min/max; omit it to let Dodo's
+    own checkout prompt the buyer for an amount.
+    """
+    cart_item: dict = {'product_id': product_id, 'quantity': 1}
+    if amount_cents is not None:
+        cart_item['amount'] = amount_cents
     payload: dict = {
-        'product_cart': [{'product_id': product_id, 'quantity': 1}],
+        'product_cart': [cart_item],
         'return_url': f'{frontend_url}?payment=success&session_id={session_id}',
         'cancel_url': f'{frontend_url}?payment=cancelled&session_id={session_id}',
         'metadata': {'session_id': session_id, 'repo_name': repo_name},

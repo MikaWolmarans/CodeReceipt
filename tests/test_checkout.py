@@ -87,3 +87,66 @@ async def test_checkout_happy_path(api, mock_db, monkeypatch):
     data = r.json()
     assert data['checkout_url'] == 'https://test.dodopayments.com/session/cks_x'
     assert 'test_mode' in data
+
+
+@pytest.mark.asyncio
+async def test_checkout_pwyw_amount_passed_through(api, mock_db, monkeypatch):
+    monkeypatch.setenv('DODO_API_KEY', 'dodo_test_dummy')
+    monkeypatch.setenv('DODO_PRODUCT_ID', 'prod_dummy')
+    await mock_db['sessions'].insert_one({
+        '_id': 'co-pwyw',
+        'status': 'complete',
+        'paid': False,
+        'analysis': {'repo_name': 'my-repo'},
+    })
+
+    captured = {}
+
+    async def _fake_checkout(**kwargs):
+        captured.update(kwargs)
+        return 'https://test.dodopayments.com/session/cks_pwyw'
+
+    monkeypatch.setattr('app.routers.checkout.create_checkout_session', _fake_checkout)
+
+    r = await api.post('/checkout/co-pwyw', json={'amount_cents': 2500})
+    assert r.status_code == 200
+    assert captured['amount_cents'] == 2500
+
+
+@pytest.mark.asyncio
+async def test_checkout_pwyw_below_minimum_422(api, mock_db, monkeypatch):
+    monkeypatch.setenv('DODO_API_KEY', 'dodo_test_dummy')
+    monkeypatch.setenv('DODO_PRODUCT_ID', 'prod_dummy')
+    monkeypatch.setenv('DODO_PWYW_MIN_CENTS', '100')
+    await mock_db['sessions'].insert_one({
+        '_id': 'co-low',
+        'status': 'complete',
+        'paid': False,
+        'analysis': {'repo_name': 'my-repo'},
+    })
+    r = await api.post('/checkout/co-low', json={'amount_cents': 50})
+    assert r.status_code == 422
+
+
+@pytest.mark.asyncio
+async def test_checkout_no_amount_omits_field(api, mock_db, monkeypatch):
+    monkeypatch.setenv('DODO_API_KEY', 'dodo_test_dummy')
+    monkeypatch.setenv('DODO_PRODUCT_ID', 'prod_dummy')
+    await mock_db['sessions'].insert_one({
+        '_id': 'co-noamt',
+        'status': 'complete',
+        'paid': False,
+        'analysis': {'repo_name': 'my-repo'},
+    })
+
+    captured = {}
+
+    async def _fake_checkout(**kwargs):
+        captured.update(kwargs)
+        return 'https://test.dodopayments.com/session/cks_noamt'
+
+    monkeypatch.setattr('app.routers.checkout.create_checkout_session', _fake_checkout)
+
+    r = await api.post('/checkout/co-noamt')
+    assert r.status_code == 200
+    assert captured['amount_cents'] is None

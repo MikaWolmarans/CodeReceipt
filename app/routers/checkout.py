@@ -1,5 +1,6 @@
 """POST /checkout/{session_id} — creates a Dodo Payments checkout session."""
 import logging
+from typing import Optional
 
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
@@ -12,17 +13,38 @@ logger = logging.getLogger(__name__)
 router = APIRouter()
 
 
+class CheckoutRequest(BaseModel):
+    # Pay-what-you-want amount in the currency's lowest unit (cents).
+    # Optional: when omitted, Dodo's checkout prompts the buyer for an amount.
+    amount_cents: Optional[int] = None
+
+
 class CheckoutResponse(BaseModel):
     checkout_url: str
     test_mode: bool
 
 
 @router.post('/checkout/{session_id}', response_model=CheckoutResponse)
-async def create_checkout(session_id: str) -> CheckoutResponse:
+async def create_checkout(
+    session_id: str, body: Optional[CheckoutRequest] = None
+) -> CheckoutResponse:
     settings = get_settings()
 
     if not settings.dodo_api_key or not settings.dodo_product_id:
         raise HTTPException(status_code=503, detail='Payments are not configured.')
+
+    amount_cents = body.amount_cents if body else None
+    if amount_cents is not None:
+        if amount_cents < settings.dodo_pwyw_min_cents:
+            raise HTTPException(
+                status_code=422,
+                detail=f'Minimum is {settings.dodo_pwyw_min_cents / 100:.2f}.',
+            )
+        if amount_cents > settings.dodo_pwyw_max_cents:
+            raise HTTPException(
+                status_code=422,
+                detail=f'Maximum is {settings.dodo_pwyw_max_cents / 100:.2f}.',
+            )
 
     session = await session_service.get_session(session_id)
     if not session:
@@ -52,6 +74,7 @@ async def create_checkout(session_id: str) -> CheckoutResponse:
             product_id=settings.dodo_product_id,
             api_key=settings.dodo_api_key,
             test_mode=settings.dodo_test_mode,
+            amount_cents=amount_cents,
         )
     except Exception as exc:
         logger.error('Dodo checkout creation failed for %s: %s', session_id, exc)

@@ -13,9 +13,17 @@
 <meta property="og:title" content="CodeReceipt — The Owner's Manual for Code You Vibe-Coded">
 <meta property="og:description" content="You shipped it with AI. You don't fully understand it. CodeReceipt reads the whole repo and writes the manual — plain English, no jargon. Free scan, then pay what you want.">
 <meta property="og:url" content="https://codereceipt.site/">
+<meta property="og:image" content="https://codereceipt.site/og-image.png">
+<meta property="og:image:secure_url" content="https://codereceipt.site/og-image.png">
+<meta property="og:image:type" content="image/png">
+<meta property="og:image:width" content="1600">
+<meta property="og:image:height" content="900">
+<meta property="og:image:alt" content="CODE RECEIPT — Understand Your Code">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="CodeReceipt — The Owner's Manual for Code You Vibe-Coded">
 <meta name="twitter:description" content="Reads the repo you don't fully understand and writes the manual. Free scan in under 60s. Full manual is pay-what-you-want. Code never stored.">
+<meta name="twitter:image" content="https://codereceipt.site/og-image.png">
+<meta name="twitter:image:alt" content="CODE RECEIPT — Understand Your Code">
 <script type="application/ld+json">
 {
   "@context": "https://schema.org",
@@ -1330,6 +1338,14 @@ function useLiveStats() {
 // ── Teaser Panel ─────────────────────────────────────────────────────────────
 function TeaserPanel({ sessionId, preview, onCheckout, checkoutLoading, checkoutError }) {
   const sc = preview.section_counts || {};
+  const MIN_USD = 1;
+  const [price, setPrice] = useState('9');
+  const priceNum = parseFloat(price);
+  const priceValid = !isNaN(priceNum) && priceNum >= MIN_USD;
+  const submitPrice = () => {
+    if (!priceValid) return;
+    onCheckout(Math.round(priceNum * 100));
+  };
   return (
     <div style={{ color: '#F2EDE3', display: 'flex', flexDirection: 'column', height: '100%' }}>
       {/* Header */}
@@ -1389,13 +1405,29 @@ function TeaserPanel({ sessionId, preview, onCheckout, checkoutLoading, checkout
       {/* CTA */}
       <div style={{ padding: '20px 32px', borderTop: '1px solid rgba(242,237,227,0.12)' }}>
         {checkoutError && <p style={{ fontFamily: 'var(--mono)', fontSize: 11, color: '#FF2B2B', marginBottom: 12 }}>{checkoutError}</p>}
+        {/* Name your price */}
+        <div style={{ marginBottom: 14 }}>
+          <p style={{ fontFamily: 'var(--mono)', fontSize: 10, letterSpacing: '0.2em', textTransform: 'uppercase', color: 'rgba(242,237,227,0.35)', marginBottom: 8 }}>NAME YOUR PRICE</p>
+          <div style={{ display: 'flex', alignItems: 'stretch', border: `1px solid ${priceValid ? 'rgba(242,237,227,0.25)' : '#FF2B2B'}`, background: 'rgba(242,237,227,0.04)' }}>
+            <span style={{ display: 'flex', alignItems: 'center', padding: '0 14px', fontFamily: 'var(--mono)', fontSize: 20, fontWeight: 700, color: 'rgba(242,237,227,0.5)', borderRight: '1px solid rgba(242,237,227,0.12)' }}>$</span>
+            <input
+              type="number" min={MIN_USD} step="1" inputMode="decimal" value={price}
+              onChange={(e) => setPrice(e.target.value)}
+              onKeyDown={(e) => { if (e.key === 'Enter') submitPrice(); }}
+              style={{ flex: 1, background: 'transparent', border: 'none', outline: 'none', color: '#F2EDE3', fontFamily: 'var(--mono)', fontSize: 20, fontWeight: 700, padding: '12px 14px', width: '100%' }}
+            />
+          </div>
+          <p style={{ fontFamily: 'var(--mono)', fontSize: 10, color: priceValid ? 'rgba(242,237,227,0.3)' : '#FF2B2B', marginTop: 6 }}>
+            {priceValid ? `$9 is the going rate · minimum $${MIN_USD}` : `Minimum is $${MIN_USD}`}
+          </p>
+        </div>
         <button
           className="submit-btn"
-          style={{ boxShadow: '6px 6px 0 rgba(232,255,0,0.25)' }}
-          onClick={onCheckout}
-          disabled={checkoutLoading}
+          style={{ boxShadow: '6px 6px 0 rgba(232,255,0,0.25)', opacity: priceValid ? 1 : 0.5 }}
+          onClick={submitPrice}
+          disabled={checkoutLoading || !priceValid}
         >
-          {checkoutLoading ? 'Opening Checkout...' : 'Unlock the Full Manual — Name Your Price →'}
+          {checkoutLoading ? 'Opening Checkout...' : `Unlock the Full Manual — Pay $${priceValid ? priceNum : '…'} →`}
         </button>
         <p style={{ fontFamily: 'var(--mono)', fontSize: 10, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'rgba(242,237,227,0.25)', marginTop: 12, textAlign: 'center' }}>
           Pay what you want · one-time · PDF + CLAUDE.md by email · 30-day link
@@ -1742,11 +1774,15 @@ function App() {
   };
 
   // ── Dodo Payments inline checkout ───────────────────────────────────────────
-  const handleCheckout = async () => {
+  const handleCheckout = async (amountCents = null) => {
     setCheckoutLoading(true);
     setCheckoutError(null);
     try {
-      const r = await fetch(`/checkout/${sessionId}`, { method: 'POST' });
+      const r = await fetch(`/checkout/${sessionId}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(amountCents != null ? { amount_cents: amountCents } : {}),
+      });
       if (!r.ok) {
         const j = await r.json();
         throw new Error(j.detail || 'Could not open checkout.');
@@ -1951,7 +1987,7 @@ function App() {
               The Owner's Manual plan supports up to 25 MB / 100 files — and uses a deeper analysis pipeline.
             </p>
             <button className="submit-btn" style={{ maxWidth: 320, boxShadow: '6px 6px 0 rgba(232,255,0,0.25)', marginBottom: 16 }}
-              onClick={sessionId ? handleCheckout : () => window.location.href = '#pricing'}
+              onClick={sessionId ? () => handleCheckout() : () => window.location.href = '#pricing'}
               disabled={checkoutLoading}>
               {sessionId ? (checkoutLoading ? 'Opening Checkout...' : 'Get the Full Manual — Name Your Price →') : 'See Pricing →'}
             </button>

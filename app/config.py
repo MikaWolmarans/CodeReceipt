@@ -86,6 +86,11 @@ class Settings(BaseSettings):
     dodo_webhook_secret: Optional[str] = Field(default=None, alias='DODO_WEBHOOK_SECRET')
     dodo_product_id: Optional[str] = Field(default=None, alias='DODO_PRODUCT_ID')
     dodo_test_mode: bool = Field(default=True, alias='DODO_TEST_MODE')
+    # Pay-what-you-want bounds, in the currency's lowest unit (cents).
+    # Must match the min/max configured on the PWYW-enabled Dodo product.
+    dodo_pwyw_min_cents: int = Field(default=100, alias='DODO_PWYW_MIN_CENTS')
+    dodo_pwyw_max_cents: int = Field(default=100000, alias='DODO_PWYW_MAX_CENTS')
+    dodo_pwyw_suggested_cents: int = Field(default=900, alias='DODO_PWYW_SUGGESTED_CENTS')
 
     # Tiered cost controls
     free_tier_max_files: int = Field(default=15, alias='FREE_TIER_MAX_FILES')
