@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CodeReceipt: Understand Your Code</title>
+<meta name="description" content="CodeReceipt is a free Claude Code skill that reads a repo you built with AI and writes the owner's manual: what you actually shipped, how it holds together, what breaks if you touch it. Runs on your machine. Code never leaves.">
+<meta name="keywords" content="claude code skill, codebase documentation, AI code explanation, owner's manual for code, understand my codebase, vibe coding, explain my repo, CLAUDE.md generator, free developer tool">
+<link rel="canonical" href="https://codereceipt.site/">
+<!-- Open Graph / social + AI crawlers -->
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="CodeReceipt">
+<meta property="og:title" content="CodeReceipt: Understand Your Code">
+<meta property="og:description" content="A free Claude Code skill that reads the repo you don't fully understand and writes the manual in plain English, no jargon. Runs locally. Your code never leaves your machine.">
+<meta property="og:url" content="https://codereceipt.site/">
+<meta property="og:image" content="https://codereceipt.site/og-image.png">
+<meta property="og:image:secure_url" content="https://codereceipt.site/og-image.png">
+<meta property="og:image:type" content="image/png">
+<meta property="og:image:width" content="1600">
+<meta property="og:image:height" content="900">
+<meta property="og:image:alt" content="CODE RECEIPT: Understand Your Code">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="CodeReceipt: Understand Your Code">
+<meta name="twitter:description" content="A free Claude Code skill that reads the repo you don't fully understand and writes the manual. Runs locally. Code never leaves your machine.">
+<meta name="twitter:image" content="https://codereceipt.site/og-image.png">
+<meta name="twitter:image:alt" content="CODE RECEIPT: Understand Your Code">
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "Organization",
+      "@id": "https://codereceipt.site/#org",
+      "name": "CodeReceipt",
+      "url": "https://codereceipt.site/",
+      "description": "CodeReceipt is a free, open Claude Code skill that turns a repository into a plain-English owner's manual and an agent-context file. Runs locally; code never leaves the machine."
+    },
+    {
+      "@type": "SoftwareApplication",
+      "name": "CodeReceipt",
+      "applicationCategory": "DeveloperApplication",
+      "operatingSystem": "Any",
+      "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
+      "description": "A free Claude Code skill that scans a codebase deterministically and writes MANUAL.md (for humans) plus a universal AGENTS.md and CLAUDE.md (for any AI coding agent). No server, no account, no data leaves your machine."
+    },
+    {
+      "@type": "FAQPage",
+      "mainEntity": [
+        { "@type": "Question", "name": "Does my code leave my machine?", "acceptedAnswer": { "@type": "Answer", "text": "No. The scanner is plain local Python and never makes a network call. Your own AI agent writes the manual on your machine. .env files are excluded by design, so secrets are never read or sent." } },
+        { "@type": "Question", "name": "What does it produce?", "acceptedAnswer": { "@type": "Answer", "text": "Files in your repo root: MANUAL.md, a readable owner's manual for humans, plus a universal agent-context file written as both AGENTS.md and CLAUDE.md, so Claude Code, Cursor, Windsurf, Copilot and other AI tools understand the codebase before they edit it." } },
+        { "@type": "Question", "name": "Is it free?", "acceptedAnswer": { "@type": "Answer", "text": "Yes. It is a free, open skill. There is no account, no server, and no API key required. Your existing agent does the writing." } }
+      ]
+    }
+  ]
+}
+</script>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🧾</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Space+Grotesk:wght@300;400;500;700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --black: #0A0A0A;
+    --cream: #F2EDE3;
+    --yellow: #E8FF00;
+    --red: #FF2B2B;
+    --border: 3px solid #0A0A0A;
+    --shadow: 6px 6px 0px #0A0A0A;
+    --shadow-lg: 10px 10px 0px #0A0A0A;
+    --mono: 'Space Mono', monospace;
+    --sans: 'Space Grotesk', sans-serif;
+  }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+  html, body { width: 100%; max-width: 100%; overflow-x: hidden; }
+  body {
+    background: var(--cream);
+    color: var(--black);
+    font-family: var(--sans);
+    position: relative;
+    cursor: crosshair;
+  }
+  ::selection { background: var(--yellow); color: var(--black); }
+  a { color: inherit; }
+
+  /* TICKER */
+  .ticker {
+    background: var(--black);
+    color: var(--yellow);
+    border-bottom: var(--border);
+    font-family: var(--mono);
+    font-size: 12px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    overflow: hidden;
+    white-space: nowrap;
+    padding: 8px 0;
+  }
+  .ticker-track { display: inline-block; animation: scroll 28s linear infinite; }
+  .ticker-track span { margin: 0 24px; }
+  @keyframes scroll { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+
+  /* NAV */
+  nav {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 18px 28px; border-bottom: var(--border); background: var(--cream);
+    position: sticky; top: 0; z-index: 50; flex-wrap: wrap; gap: 12px;
+  }
+  .brand { font-family: var(--mono); font-weight: 700; font-size: 20px; letter-spacing: -0.03em; text-transform: uppercase; }
+  .brand .tag { background: var(--yellow); padding: 2px 8px; border: var(--border); margin-left: 4px; }
+  .nav-links { display: flex; gap: 22px; font-family: var(--mono); font-size: 13px; text-transform: uppercase; letter-spacing: 0.08em; }
+  .nav-links a { text-decoration: none; }
+  .nav-links a:hover { color: var(--red); }
+  .btn {
+    display: inline-block; font-family: var(--mono); font-weight: 700; font-size: 14px;
+    text-transform: uppercase; letter-spacing: 0.05em; text-decoration: none;
+    background: var(--black); color: var(--yellow); border: var(--border);
+    padding: 12px 22px; box-shadow: var(--shadow); transition: transform .08s, box-shadow .08s;
+  }
+  .btn:hover { transform: translate(-2px,-2px); box-shadow: 8px 8px 0 var(--black); }
+  .btn:active { transform: translate(3px,3px); box-shadow: 2px 2px 0 var(--black); }
+  .btn.alt { background: var(--yellow); color: var(--black); }
+  .btn.ghost { background: var(--cream); color: var(--black); }
+
+  .wrap { max-width: 1080px; margin: 0 auto; padding: 0 24px; }
+
+  /* HERO */
+  .hero { border-bottom: var(--border); padding: 64px 0 56px; position: relative; }
+  .kicker { font-family: var(--mono); font-size: 12px; letter-spacing: 0.25em; text-transform: uppercase; color: var(--red); margin-bottom: 20px; }
+  .hero h1 {
+    font-weight: 800; font-size: clamp(52px, 12vw, 132px); line-height: 0.86;
+    letter-spacing: -0.04em; text-transform: uppercase;
+  }
+  .hero h1 .accent { color: var(--red); }
+  .hero .sub { font-size: clamp(17px, 2.4vw, 22px); max-width: 640px; margin: 28px 0 8px; line-height: 1.5; font-weight: 400; }
+  .hero .sub strong { background: var(--yellow); padding: 0 6px; font-weight: 700; }
+  .hero-cta { display: flex; gap: 16px; margin-top: 32px; flex-wrap: wrap; }
+  .hero-meta { font-family: var(--mono); font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase; color: rgba(10,10,10,0.55); margin-top: 28px; display:flex; gap:18px; flex-wrap:wrap; }
+  .hero-meta span::before { content: "▪ "; color: var(--red); }
+
+  /* SECTION scaffolding */
+  section { border-bottom: var(--border); padding: 56px 0; }
+  .eyebrow { font-family: var(--mono); font-size: 12px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--red); margin-bottom: 14px; }
+  h2 { font-weight: 800; font-size: clamp(30px, 5vw, 48px); line-height: 1; letter-spacing: -0.03em; text-transform: uppercase; margin-bottom: 20px; }
+  .lead { font-size: 18px; line-height: 1.6; max-width: 720px; }
+  .lead + .lead { margin-top: 16px; }
+
+  /* CARDS */
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 0; border: var(--border); box-shadow: var(--shadow-lg); }
+  .grid2 > div { padding: 32px; }
+  .grid2 > div:first-child { border-right: var(--border); }
+  .card-file { font-family: var(--mono); font-weight: 700; font-size: 20px; letter-spacing: -0.02em; margin-bottom: 8px; }
+  .card-file .pill { font-size: 11px; background: var(--black); color: var(--yellow); padding: 2px 8px; margin-left: 8px; vertical-align: middle; }
+  .card-file .pill.y { background: var(--yellow); color: var(--black); }
+  .card-desc { font-size: 15px; line-height: 1.6; margin-bottom: 16px; }
+  .card-list { list-style: none; font-family: var(--mono); font-size: 13px; line-height: 2; }
+  .card-list li::before { content: "→ "; color: var(--red); }
+
+  /* STEPS */
+  .steps { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0; border: var(--border); box-shadow: var(--shadow-lg); }
+  .steps > div { padding: 28px; border-right: var(--border); }
+  .steps > div:last-child { border-right: none; }
+  .step-n { font-family: var(--mono); font-weight: 700; font-size: 40px; color: var(--yellow); -webkit-text-stroke: 2px var(--black); line-height: 1; margin-bottom: 12px; }
+  .step-h { font-family: var(--mono); font-weight: 700; text-transform: uppercase; font-size: 15px; letter-spacing: 0.04em; margin-bottom: 8px; }
+  .step-p { font-size: 14px; line-height: 1.6; }
+
+  /* CODE */
+  .code {
+    background: var(--black); color: var(--cream); border: var(--border); box-shadow: var(--shadow);
+    font-family: var(--mono); font-size: 14px; line-height: 1.8; padding: 20px 22px; margin: 14px 0;
+    position: relative; overflow-x: auto;
+  }
+  .code .c { color: rgba(242,237,227,0.45); }
+  .code .y { color: var(--yellow); }
+  .copy-btn {
+    position: absolute; top: 12px; right: 12px; font-family: var(--mono); font-size: 10px;
+    text-transform: uppercase; letter-spacing: 0.1em; background: var(--yellow); color: var(--black);
+    border: 2px solid var(--cream); padding: 4px 10px; cursor: pointer;
+  }
+  .copy-btn:active { transform: translateY(1px); }
+  .step-label { font-family: var(--mono); font-size: 12px; letter-spacing: 0.12em; text-transform: uppercase; color: rgba(10,10,10,0.55); margin: 26px 0 2px; }
+
+  /* TRUST */
+  .trust { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; }
+  .trust > div { border: var(--border); padding: 24px; box-shadow: var(--shadow); background: var(--cream); }
+  .trust h3 { font-family: var(--mono); font-size: 15px; text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 10px; }
+  .trust h3::before { content: "✓ "; color: var(--red); }
+  .trust p { font-size: 14px; line-height: 1.6; }
+
+  /* FOOTER */
+  footer { padding: 48px 0 60px; }
+  .foot-big { font-weight: 800; font-size: clamp(28px, 6vw, 56px); line-height: 0.95; letter-spacing: -0.03em; text-transform: uppercase; margin-bottom: 24px; }
+  .foot-big .accent { color: var(--red); }
+  .foot-meta { font-family: var(--mono); font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase; color: rgba(10,10,10,0.55); line-height: 2; }
+
+  .note { font-family: var(--mono); font-size: 12px; line-height: 1.7; border-left: 4px solid var(--yellow); padding: 4px 0 4px 16px; margin-top: 20px; color: rgba(10,10,10,0.7); }
+
+  @media (max-width: 720px) {
+    .grid2 { grid-template-columns: 1fr; }
+    .grid2 > div:first-child { border-right: none; border-bottom: var(--border); }
+    .steps { grid-template-columns: 1fr; }
+    .steps > div { border-right: none; border-bottom: var(--border); }
+    .steps > div:last-child { border-bottom: none; }
+    .trust { grid-template-columns: 1fr; }
+    .nav-links { display: none; }
+  }
+</style>
+</head>
+<body>
+
+<div class="ticker" aria-hidden="true">
+  <div class="ticker-track">
+    <span>FREE + OPEN</span><span>★</span><span>RUNS ON YOUR MACHINE</span><span>★</span><span>CODE NEVER LEAVES</span><span>★</span><span>NO ACCOUNT</span><span>★</span><span>NO SERVER</span><span>★</span><span>UNDERSTAND YOUR CODE</span><span>★</span>
+    <span>FREE + OPEN</span><span>★</span><span>RUNS ON YOUR MACHINE</span><span>★</span><span>CODE NEVER LEAVES</span><span>★</span><span>NO ACCOUNT</span><span>★</span><span>NO SERVER</span><span>★</span><span>UNDERSTAND YOUR CODE</span><span>★</span>
+  </div>
+</div>
+
+<nav>
+  <div class="brand">CODE<span class="tag">RECEIPT</span></div>
+  <div class="nav-links">
+    <a href="#what">What</a>
+    <a href="#get">You Get</a>
+    <a href="#how">How</a>
+    <a href="#install">Install</a>
+  </div>
+  <a class="btn" href="#install">Get the Skill →</a>
+</nav>
+
+<header class="hero">
+  <div class="wrap">
+    <div class="kicker">A free Claude Code skill</div>
+    <h1>Understand<br>Your <span class="accent">Code.</span></h1>
+    <p class="sub">You shipped it with an AI. You don't fully understand what you own. CodeReceipt reads the whole repo and writes the manual in <strong>plain English, no jargon</strong>, so you actually know what you built and what breaks if you touch it.</p>
+    <div class="hero-cta">
+      <a class="btn" href="#install">Install the Skill →</a>
+      <a class="btn ghost" href="https://github.com/MikaWolmarans/CodeReceipt" rel="noopener">View on GitHub</a>
+    </div>
+    <div class="hero-meta">
+      <span>Runs locally</span><span>Code never leaves your machine</span><span>No account, no server</span>
+    </div>
+  </div>
+</header>
+
+<section id="what">
+  <div class="wrap">
+    <div class="eyebrow">// The problem</div>
+    <h2>The AI wrote it.<br>Now what?</h2>
+    <p class="lead">Modern models can build you a working app in an afternoon. What they can't do is leave you understanding it. You end up with a repo full of code you didn't write, can't fully read, and are scared to change, because you don't know what's load-bearing and what's decoration.</p>
+    <p class="lead">CodeReceipt closes that gap. It's a skill your own coding agent runs against your repo. It scans the code, then hands you back the owner's manual the AI never wrote: what you actually shipped, how the pieces hold together, and exactly where the wires are live.</p>
+  </div>
+</section>
+
+<section id="get">
+  <div class="wrap">
+    <div class="eyebrow">// What you get</div>
+    <h2>Two files. Zero fog.</h2>
+    <div class="grid2">
+      <div>
+        <div class="card-file">MANUAL.md <span class="pill y">for humans</span></div>
+        <p class="card-desc">A readable owner's manual for the person who owns the code. Written in plain English, deadpan, no filler.</p>
+        <ul class="card-list">
+          <li>What you built + a quick start</li>
+          <li>Architecture, in words you can follow</li>
+          <li>Key systems and what breaks if they fail</li>
+          <li>A safe-to-touch map (green → red)</li>
+          <li>Env vars, running costs, known risks</li>
+        </ul>
+      </div>
+      <div>
+        <div class="card-file">AGENTS.md <span class="pill">for any AI tool</span></div>
+        <p class="card-desc">A universal agent-context file (written as both <code>AGENTS.md</code> and <code>CLAUDE.md</code>) so Claude Code, Cursor, Windsurf, Copilot and any other agent understand the codebase <em>before</em> they edit it.</p>
+        <ul class="card-list">
+          <li>Project overview + architecture</li>
+          <li>Key systems and their main files</li>
+          <li>Do-not-touch rules, spelled out</li>
+          <li>Env var names + purpose (never values)</li>
+          <li>Conventions the code already follows</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="how">
+  <div class="wrap">
+    <div class="eyebrow">// How it works</div>
+    <h2>Scan. Read. Write.</h2>
+    <div class="steps">
+      <div>
+        <div class="step-n">01</div>
+        <div class="step-h">Deterministic scan</div>
+        <p class="step-p">A zero-dependency Python script walks your repo and pulls the facts: stack, file map, entry points, env-var names. No AI. No network. <code>.env</code> files excluded by design.</p>
+      </div>
+      <div>
+        <div class="step-n">02</div>
+        <div class="step-h">Your agent reads</div>
+        <p class="step-p">Your own model reads the facts, opens the files that matter, and figures out what's really going on, marking anything it can't verify instead of guessing.</p>
+      </div>
+      <div>
+        <div class="step-n">03</div>
+        <div class="step-h">The manual lands</div>
+        <p class="step-p">It writes <code>MANUAL.md</code> plus a universal <code>AGENTS.md</code> / <code>CLAUDE.md</code> straight into your repo. The model is yours, so there's nothing to pay and nothing to upload.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="install">
+  <div class="wrap">
+    <div class="eyebrow">// Install</div>
+    <h2>Two minutes.</h2>
+    <p class="lead">Grab the skill and drop it into your project (or your user-level skills folder to use it everywhere).</p>
+
+    <div class="step-label">1 · Clone the repo</div>
+    <div class="code"><button class="copy-btn" onclick="cp(this)">Copy</button><span class="c"># get the skill</span>
+git clone https://github.com/MikaWolmarans/CodeReceipt.git</div>
+
+    <div class="step-label">2 · Install the skill into your project</div>
+    <div class="code"><button class="copy-btn" onclick="cp(this)">Copy</button>mkdir -p .claude/skills
+cp -r CodeReceipt/code-receipt-skill .claude/skills/code-receipt</div>
+
+    <div class="step-label">3 · Ask your agent</div>
+    <div class="code"><button class="copy-btn" onclick="cp(this)">Copy</button><span class="y">›</span> explain this codebase / document this repo / make me a CLAUDE.md</div>
+
+    <p class="note">Prefer to just run the scanner? It's plain stdlib Python 3, no install:<br>
+    <span class="y" style="color:var(--red)">python3 .claude/skills/code-receipt/scripts/scan.py . -o codereceipt-facts.json</span></p>
+  </div>
+</section>
+
+<section id="trust">
+  <div class="wrap">
+    <div class="eyebrow">// The deal</div>
+    <h2>Free. And it stays on your machine.</h2>
+    <div class="trust">
+      <div>
+        <h3>Your code never leaves</h3>
+        <p>The scanner is local Python with no network calls. Your agent writes the manual on your machine. Nothing is uploaded, ever.</p>
+      </div>
+      <div>
+        <h3>Secrets stay secret</h3>
+        <p><code>.env</code> files are excluded by design. The manual lists variable <em>names</em> and their purpose, never a single value.</p>
+      </div>
+      <div>
+        <h3>No account, no catch</h3>
+        <p>No sign-up, no server, no API key from us. Your own agent does the work. Open source, so you can read exactly how it's built.</p>
+      </div>
+    </div>
+    <p class="note">Why free? Plenty of tools got me here as a developer. This is one back. Learn from your own codebase, and from how the thing is put together.</p>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <div class="foot-big">Stop guessing.<br>Read the <span class="accent">receipt.</span></div>
+    <a class="btn alt" href="#install">Get the Skill →</a>
+    <div class="foot-meta" style="margin-top:32px;">
+      CODERECEIPT · UNDERSTAND YOUR CODE<br>
+      Built by a developer, for developers who ship with AI · <a href="https://github.com/MikaWolmarans/CodeReceipt" style="color:var(--red)">GitHub</a>
+    </div>
+  </div>
+</footer>
+
+<script>
+  function cp(btn) {
+    var code = btn.parentElement.innerText.replace(/^Copy\s*/, '').trim();
+    navigator.clipboard.writeText(code).then(function () {
+      var old = btn.innerText; btn.innerText = 'Copied ✓';
+      setTimeout(function () { btn.innerText = old; }, 1400);
+    });
+  }
+</script>
+</body>
+</html>
