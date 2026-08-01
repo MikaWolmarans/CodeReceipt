@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
+  <rect width="64" height="64" fill="#E8FF00"/>
+  <rect x="3" y="3" width="58" height="58" fill="none" stroke="#0A0A0A" stroke-width="6"/>
+  <text x="32" y="45" text-anchor="middle" font-family="'Courier New', Courier, monospace" font-size="34" font-weight="700" fill="#0A0A0A" letter-spacing="-2">CR</text>
+</svg>
