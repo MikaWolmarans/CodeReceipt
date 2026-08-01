@@ -4,3 +4,10 @@ __pycache__/
 *.pyc
 *.pyo
 .DS_Store
+
+# Internal — not for public exposure
+tests/
+plans/
+.claude/
+manual.pdf
+codereceipt-facts.json
