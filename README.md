@@ -57,3 +57,7 @@ python3 .claude/skills/code-receipt/scripts/scan.py . -o codereceipt-facts.json
 ## Privacy
 
 The scanner never makes a network call and never reads `.env*` files. The manual lists environment-variable names and their purpose, never their values. Your code stays on your machine.
+
+## License
+
+Released under the [MIT License](LICENSE).
